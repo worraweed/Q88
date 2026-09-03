@@ -1,0 +1,2887 @@
+<!DOCTYPE html>
+<html lang="th" class="h-full bg-slate-100 antialiased">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PTT Group - AI Vessel Document Clearance System</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Google Fonts: Inter & Sarabun -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Sarabun', 'Inter', 'sans-serif'],
+            mono: ['SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'monospace']
+          },
+          colors: {
+            pttBlue: '#005CA9',
+            pttBlueHover: '#004B8A',
+            pttCyan: '#00A3E0',
+            pttDark: '#0B1B2B',
+            pinkAccent: '#E91E63',
+            orangeInput: '#FF7A00',
+            status: {
+              pass: '#10B981',
+              warn: '#F59E0B',
+              fail: '#EF4444',
+              manual: '#64748B',
+              override: '#3B82F6'
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Custom Scrollbar for professional enterprise UI */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #f1f5f9; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    
+    .orange-field {
+      background-color: #fffaf0;
+      border-color: #fdba74;
+      color: #9a3412;
+    }
+    .orange-field:focus {
+      border-color: #f97316;
+      box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.2);
+    }
+    .badge-pass { background-color: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
+    .badge-warn { background-color: #fffbeb; color: #b45309; border: 1px solid #fde68a; }
+    .badge-fail { background-color: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
+    .badge-manual { background-color: #f8fafc; color: #475569; border: 1px solid #e2e8f0; }
+    .badge-override { background-color: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+    
+    .bounding-box {
+      transition: all 0.2s ease-in-out;
+      border: 2px dashed;
+    }
+    .bounding-box.active {
+      transform: scale(1.01);
+      box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.4);
+    }
+  </style>
+</head>
+<body class="h-full flex overflow-hidden text-slate-800 font-sans">
+
+  <!-- ================= LEFT NAVIGATION SIDEBAR ================= -->
+  <aside class="w-64 bg-[#0a1120] text-slate-300 flex flex-col justify-between flex-shrink-0 z-30 shadow-2xl border-r border-slate-800/80">
+    <div class="flex flex-col">
+      <!-- System Brand Logo & Header -->
+      <div class="h-16 flex items-center px-5 bg-[#070d18] border-b border-slate-800/80 gap-3">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-sky-600 to-cyan-400 flex items-center justify-center text-white font-black text-base shadow-md">
+          <i class="fa-solid fa-ship"></i>
+        </div>
+        <div>
+          <h1 class="font-bold text-white leading-tight text-sm tracking-wide">VESSEL CLEARANCE</h1>
+          <p class="text-[10px] text-cyan-400 font-medium tracking-wider">AI OCR & RULE ENGINE</p>
+        </div>
+      </div>
+
+      <!-- Quick Action: Create New Request (Gradient Pill Button) -->
+      <div class="p-4 pb-3">
+        <button onclick="navigate('create')" class="w-full bg-gradient-to-r from-[#0284c7] via-[#0ea5e9] to-[#00b4d8] hover:from-[#0369a1] hover:to-[#0284c7] text-white font-bold py-3 px-4 rounded-2xl flex items-center justify-center gap-2.5 shadow-lg shadow-cyan-900/30 transition transform active:scale-95 text-sm">
+          <i class="fa-solid fa-circle-plus text-base"></i>
+          <span>Create New Request</span>
+        </button>
+      </div>
+
+      <!-- Navigation Links -->
+      <nav class="px-3 space-y-1.5 text-xs">
+        <!-- Section: MAIN CLEARANCE FLOW -->
+        <div class="px-3 pt-3 pb-1 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+          MAIN CLEARANCE FLOW
+        </div>
+        
+        <button onclick="navigate('dashboard')" id="nav-dashboard" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium transition text-white bg-slate-800/90 shadow-sm">
+          <i class="fa-solid fa-table-list w-4 text-blue-400 text-sm"></i>
+          <span>Dashboard &amp; History</span>
+        </button>
+
+        <!-- Divider Line -->
+        <div class="border-t border-slate-800/80 my-3 mx-2"></div>
+
+        <!-- Section: ADMIN CONSOLE -->
+        <div class="flex items-center justify-between px-3 pt-1 pb-1 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+          <span>ADMIN CONSOLE</span>
+          <i class="fa-solid fa-shield text-fuchsia-400 text-xs"></i>
+        </div>
+        
+        <button onclick="navigate('admin-user')" id="nav-admin-user" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium transition text-slate-300 hover:bg-slate-800/70 hover:text-white">
+          <i class="fa-solid fa-user-shield w-4 text-slate-400 text-sm"></i>
+          <span>User & BU Mapping</span>
+        </button>
+
+        <button onclick="navigate('admin-port')" id="nav-admin-port" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium transition text-slate-300 hover:bg-slate-800/70 hover:text-white">
+          <i class="fa-solid fa-anchor w-4 text-slate-400 text-sm"></i>
+          <span>Port & Logic Engine</span>
+        </button>
+      </nav>
+    </div>
+
+    <!-- Active BU Rules Card & Azure AD Switcher at Bottom -->
+    <div class="p-3 m-3 space-y-2">
+      <div class="p-3.5 bg-[#121c2e] rounded-2xl border border-slate-800/90 text-xs shadow-lg">
+        <div class="flex items-center justify-between mb-1.5">
+          <div class="flex items-center gap-2 font-bold text-white text-xs">
+            <i class="fa-solid fa-bolt text-amber-400 text-sm"></i>
+            <span>Active BU Rules</span>
+          </div>
+          <button onclick="openSsoModal()" title="Switch Azure AD Persona" class="text-[10px] text-cyan-400 hover:text-cyan-300 underline font-medium">Switch</button>
+        </div>
+        <p class="text-[11px] text-slate-400 leading-relaxed">
+          Rules auto-align with user’s BU: <span id="sidebar-active-bu-rule" class="font-bold text-slate-100">IRPC Rayong Logic</span>
+        </p>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ================= MAIN CONTENT WRAPPER ================= -->
+  <main class="flex-1 flex flex-col min-w-0 overflow-hidden bg-slate-100">
+
+    <!-- Global Top Header Bar -->
+    <header class="h-16 bg-white border-b border-slate-200 px-6 flex items-center justify-between flex-shrink-0 z-10 shadow-sm">
+      <div class="flex items-center gap-3">
+        <div class="flex items-center gap-2 text-xs font-semibold">
+          <span class="text-slate-400">Business Unit:</span>
+          <span id="header-bu-pill" class="px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 border border-blue-200 flex items-center gap-1.5 font-bold">
+            <span class="w-2 h-2 rounded-full bg-blue-600 animate-pulse"></span>
+            <span id="current-header-bu">GC (PTT Global Chemical)</span>
+          </span>
+          <span class="text-slate-300">|</span>
+          <span class="text-slate-500 font-medium hidden sm:inline" id="header-logic-rule-desc">
+            Rule Policy: P&I/H&M Insurance Expiry ≥ Laycan End + 7 Days (GC Formula)
+          </span>
+        </div>
+      </div>
+
+      <!-- Quick Status & Notifications -->
+      <div class="flex items-center gap-4">
+        <div class="text-right hidden md:block">
+          <div class="text-[11px] font-bold text-slate-700">Production Mode: <span class="text-emerald-600">Zero-File Storage Enabled</span></div>
+          <div class="text-[10px] text-slate-400">System Time: 02 Sep 2026, 14:15 GMT+7</div>
+        </div>
+        <div class="h-8 w-px bg-slate-200 hidden md:block"></div>
+        <button onclick="showToast('ระบบกำลังเชื่อมต่อฐานข้อมูล Enterprise Data Platform เรียบร้อย', 'info')" class="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition relative">
+          <i class="fa-solid fa-bell text-xs"></i>
+          <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-pinkAccent rounded-full"></span>
+        </button>
+      </div>
+    </header>
+
+    <!-- App Dynamic Screens Viewport -->
+    <div class="flex-1 overflow-y-auto" id="app-viewport">
+
+      <!-- ================= SCREEN 1 & 10: DASHBOARD & REQUEST HISTORY ================= -->
+      <section id="view-dashboard" class="screen-view p-6 space-y-6 max-w-7xl mx-auto">
+        
+        <!-- Welcome Banner -->
+        <div class="bg-gradient-to-r from-blue-900 via-slate-900 to-slate-800 rounded-2xl p-6 text-white shadow-md relative overflow-hidden">
+          <div class="relative z-10 max-w-2xl space-y-2">
+            <div class="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-blue-500/20 text-cyan-300 border border-blue-400/30 text-xs font-semibold">
+              <i class="fa-solid fa-shield-check"></i> Azure AD SSO Authenticated
+            </div>
+            <h2 class="text-2xl font-bold tracking-tight">ระบบตรวจประเมินเอกสารเรือและข้อกำหนดหน้าท่า (Q88 AI Clearance)</h2>
+            <p class="text-xs text-slate-300 leading-relaxed">
+              ช่วยตรวจสอบเอกสารแบบสอบถาม Q88, กรมธรรม์ประกันภัย และตารางโหลดไลน์เทียบกับเกณฑ์ความปลอดภัยของแต่ละ BU และ Terminal ในกลุ่ม ปตท. โดยอัตโนมัติ
+            </p>
+          </div>
+          <i class="fa-solid fa-ship absolute -right-6 -bottom-10 text-9xl text-white/5 pointer-events-none"></i>
+        </div>
+
+        <!-- Filter & Search Toolbar (Individual Field Filters) -->
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-3">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+            <div class="flex items-center gap-2 text-xs font-bold text-slate-700">
+              <i class="fa-solid fa-filter text-blue-600"></i>
+              <span>ค้นหาและกรองข้อมูลคำขอ (Search & Filter Criteria)</span>
+            </div>
+            <button onclick="resetHistoryFilters()" class="text-[11px] text-slate-400 hover:text-blue-600 font-medium flex items-center gap-1 transition">
+              <i class="fa-solid fa-rotate-left"></i> ล้างตัวกรองทั้งหมด (Reset)
+            </button>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3">
+            <!-- Filter: Vessel Name -->
+            <div>
+              <label class="block text-[11px] font-semibold text-slate-600 mb-1">ชื่อเรือ (Vessel Name)</label>
+              <div class="relative">
+                <i class="fa-solid fa-ship absolute left-3 top-2.5 text-xs text-slate-400"></i>
+                <input type="text" id="history-filter-vessel" oninput="applyHistoryFilter()" placeholder="e.g. Atlantic Explorer" class="w-full text-xs pl-8 pr-3 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500 bg-slate-50 focus:bg-white" />
+              </div>
+            </div>
+
+            <!-- Filter: IMO No. -->
+            <div>
+              <label class="block text-[11px] font-semibold text-slate-600 mb-1">หมายเลข IMO (7 หลัก)</label>
+              <div class="relative">
+                <i class="fa-solid fa-hashtag absolute left-3 top-2.5 text-xs text-slate-400"></i>
+                <input type="text" id="history-filter-imo" oninput="applyHistoryFilter()" placeholder="e.g. 9397212" class="w-full text-xs pl-8 pr-3 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500 bg-slate-50 focus:bg-white font-mono" />
+              </div>
+            </div>
+
+            <!-- Filter: Terminal Group (formerly BU) -->
+            <div>
+              <label class="block text-[11px] font-semibold text-slate-600 mb-1">Terminal Group</label>
+              <select id="history-filter-bu" onchange="applyHistoryFilter()" class="w-full text-xs px-3 py-2 rounded-lg border border-slate-200 bg-white font-medium text-slate-700 focus:ring-1 focus:ring-blue-500">
+                <option value="ALL">ทุก Terminal Group (All Groups)</option>
+                <option value="GC">GC (PTT Global Chemical)</option>
+                <option value="IRPC">IRPC</option>
+                <option value="TOP">TOP / TPX</option>
+                <option value="PTTTANK">PTT TANK</option>
+                <option value="OR">OR</option>
+              </select>
+            </div>
+
+            <!-- Filter: Terminal Name (Dropdown Select) -->
+            <div>
+              <label class="block text-[11px] font-semibold text-slate-600 mb-1">Terminal Name</label>
+              <select id="history-filter-terminal" onchange="applyHistoryFilter()" class="w-full text-xs px-3 py-2 rounded-lg border border-slate-200 bg-white font-medium text-slate-700 focus:ring-1 focus:ring-blue-500">
+                <option value="ALL">ทุกท่าเรือ (All Terminals)</option>
+                <option value="GC SPM">GC SPM (Offshore)</option>
+                <option value="GC West Terminal">GC West Terminal</option>
+                <option value="GC East Terminal">GC East Terminal</option>
+                <option value="GC (Thai Tank) Terminal">GC (Thai Tank) Terminal</option>
+                <option value="IRPC Rayong Terminal">IRPC Rayong Terminal</option>
+                <option value="IRPC Phrapradaeng Terminal">IRPC Phrapradaeng Terminal</option>
+                <option value="IRPC Maeklong Terminal">IRPC Maeklong Terminal</option>
+                <option value="IRPC Chumphon Terminal">IRPC Chumphon Terminal</option>
+                <option value="TOP In-Shore Terminal">TOP In-Shore Terminal</option>
+                <option value="TOP CBM">TOP CBM</option>
+                <option value="TOP SPM 1">TOP SPM 1</option>
+                <option value="TOP SPM 2">TOP SPM 2</option>
+                <option value="PTT Tank Terminal">PTT Tank Terminal</option>
+                <option value="OR Bangkok Terminal">OR Bangkok Terminal</option>
+                <option value="PTT(OR) Sriracha Terminal">PTT(OR) Sriracha Terminal</option>
+                <option value="OR Bandon Terminal">OR Bandon Terminal</option>
+                <option value="OR Songkhla Terminal">OR Songkhla Terminal</option>
+                <option value="OR Phuket Terminal">OR Phuket Terminal</option>
+                <option value="PTT(OR) Khaoboya Terminal">PTT(OR) Khaoboya Terminal</option>
+              </select>
+            </div>
+
+            <!-- Filter: Status -->
+            <div>
+              <label class="block text-[11px] font-semibold text-slate-600 mb-1">สถานะผลการตรวจ (Status)</label>
+              <select id="history-filter-status" onchange="applyHistoryFilter()" class="w-full text-xs px-3 py-2 rounded-lg border border-slate-200 bg-white font-semibold text-slate-700 focus:ring-1 focus:ring-blue-500">
+                <option value="ALL">สถานะทั้งหมด (All Status)</option>
+                <option value="PASS">Pass (ผ่าน)</option>
+                <option value="FAIL">Fail (ไม่ผ่าน)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Request History Table -->
+        <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+          <div class="px-5 py-3 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+            <span class="text-xs font-bold text-slate-700 uppercase tracking-wider">รายการประวัติการตรวจสอบเอกสาร (Data Only - No PDF Files in DB)</span>
+            <span class="text-[11px] text-slate-400" id="table-count-label">แสดง 3 รายการ</span>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-50 text-slate-600 font-semibold border-b border-slate-200">
+                <tr>
+                  <th class="px-4 py-3">Request ID</th>
+                  <th class="px-4 py-3">วันที่ส่งคำขอ (Request Date)</th>
+                  <th class="px-4 py-3">ชื่อเรือ / IMO</th>
+                  <th class="px-4 py-3">BU (ทีมผู้ขอ)</th>
+                  <th class="px-4 py-3">ท่าที่โหลด (Terminal)</th>
+                  <th class="px-4 py-3">Product</th>
+                  <th class="px-4 py-3">ช่วงวัน Laycan</th>
+                  <th class="px-4 py-3">สถานะผลการตรวจ</th>
+                  <th class="px-4 py-3 text-right">การจัดการ</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 font-medium" id="history-table-body">
+                <!-- Populated by JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- ================= SCREEN 2, 3, 4: CREATE REQUEST & ORANGE FIELDS ================= -->
+      <section id="view-create" class="screen-view hidden p-6 max-w-5xl mx-auto space-y-6">
+        
+        <div class="flex items-center justify-between border-b border-slate-200 pb-4">
+          <div>
+            <h2 class="text-xl font-bold text-slate-900">บันทึกคำขอตรวจประเมินเรือ (Create Nomination Request)</h2>
+            <p class="text-xs text-slate-500">ขั้นตอนที่ 2, 3 และ 4: ระบุข้อมูลเรือ, ท่าเรือ, ค่าข้อกำหนดหน้าท่า (Orange Fields) และแนบเอกสาร</p>
+          </div>
+          <button onclick="navigate('dashboard')" class="text-xs text-slate-500 hover:text-slate-800 font-medium flex items-center gap-1">
+            <i class="fa-solid fa-arrow-left"></i> ย้อนกลับ Dashboard
+          </button>
+        </div>
+
+        <form id="create-request-form" onsubmit="handleCreateRequestSubmit(event)" class="space-y-6">
+          
+          <!-- Card 1: Step 2 & 3 - Vessel & Terminal Nomination -->
+          <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+              <h3 class="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                <span class="w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center text-[10px]">1</span>
+                ข้อมูลการเสนอชื่อเรือและท่าเรือ (Vessel & Terminal Information)
+              </h3>
+              <span class="text-[10px] text-slate-400">* จำเป็นต้องระบุทุกช่อง</span>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+              <div>
+                <label class="block font-medium text-slate-700 mb-1">ชื่อเรือ (Vessel Name) *</label>
+                <input type="text" id="req-vsl-name" value="Atlantic Explorer" required class="w-full px-3 py-2 rounded-lg border border-slate-300 font-semibold text-slate-900 focus:ring-1 focus:ring-blue-500" placeholder="1-30 ตัวอักษร" />
+              </div>
+              <div>
+                <label class="block font-medium text-slate-700 mb-1">หมายเลข IMO (7 หลัก) *</label>
+                <input type="text" id="req-imo" value="9397212" pattern="[0-9]{7}" required class="w-full px-3 py-2 rounded-lg border border-slate-300 font-mono text-slate-900 focus:ring-1 focus:ring-blue-500" placeholder="e.g. 9397212" />
+              </div>
+              <div>
+                <label class="block font-medium text-slate-700 mb-1">ผลิตภัณฑ์ (Product Type) *</label>
+                <select id="req-product" class="w-full px-3 py-2 rounded-lg border border-slate-300 focus:ring-1 focus:ring-blue-500 bg-white">
+                  <option value="Petroleum">Petroleum (Crude / Fuel Oil)</option>
+                  <option value="LN">LN - Liquid Nitrogen</option>
+                  <option value="PX">PX - Paraxylene</option>
+                  <option value="BZ">BZ - Benzene</option>
+                  <option value="Ethylene">Ethylene Glycol (Chemical)</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block font-medium text-slate-700 mb-1">Business Unit (BU) *</label>
+                <select id="req-bu" onchange="onBuChangeInCreateForm()" class="w-full px-3 py-2 rounded-lg border border-blue-300 font-bold text-blue-700 bg-blue-50/50 focus:ring-1 focus:ring-blue-500">
+                  <option value="GC">GC (PTT Global Chemical)</option>
+                  <option value="IRPC">IRPC</option>
+                  <option value="TOP">TOP / TPX</option>
+                  <option value="PTTTANK">PTT TANK</option>
+                  <option value="OR">OR</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block font-medium text-slate-700 mb-1">ท่าเรือเป้าหมาย (Terminal) *</label>
+                <select id="req-terminal" onchange="onTerminalChangeInCreateForm()" class="w-full px-3 py-2 rounded-lg border border-slate-300 focus:ring-1 focus:ring-blue-500 bg-white">
+                  <!-- Populated dynamically based on BU -->
+                </select>
+              </div>
+
+              <div>
+                <label class="block font-medium text-slate-700 mb-1">กำหนดวันสิ้นสุดการขนถ่าย (Discharge Last Day) *</label>
+                <input type="date" id="req-discharge-date" value="2026-09-15" required class="w-full px-3 py-1.5 rounded-lg border border-slate-300 font-mono text-xs focus:ring-1 focus:ring-blue-500" />
+              </div>
+
+              <div class="sm:col-span-3 grid grid-cols-2 gap-4 bg-slate-50 p-3 rounded-lg border border-slate-200">
+                <div>
+                  <label class="block font-medium text-slate-700 mb-1">วันแรกของ Laycan (First Day of Laycan) *</label>
+                  <input type="date" id="req-laycan-start" value="2026-09-10" required class="w-full px-3 py-1.5 rounded-lg border border-slate-300 font-mono text-xs bg-white" />
+                </div>
+                <div>
+                  <label class="block font-medium text-slate-700 mb-1">วันสุดท้ายของ Laycan (Last Day of Laycan) *</label>
+                  <input type="date" id="req-laycan-end" value="2026-09-15" required class="w-full px-3 py-1.5 rounded-lg border border-slate-300 font-mono text-xs bg-white" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Card 2: Step 4 - Orange Fields (Manual Inputs for Calculations) -->
+          <div class="bg-orange-50/40 p-5 rounded-xl border border-orange-200 shadow-sm space-y-4">
+            <div class="flex items-center justify-between border-b border-orange-100 pb-2">
+              <div>
+                <h3 class="text-xs font-bold text-orange-950 uppercase tracking-wider flex items-center gap-2">
+                  <span class="w-5 h-5 rounded-full bg-orangeInput text-white flex items-center justify-center text-[10px]">2</span>
+                  ข้อกำหนดและข้อจำกัดหน้าท่า (Orange Fields - Manual Input for Rule Engine)
+                </h3>
+                <p class="text-[11px] text-orange-800 mt-0.5">ค่าพารามิเตอร์ของท่าเรือที่นำไปคำนวณเปรียบเทียบกับค่าในเอกสาร Q88</p>
+              </div>
+              <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-orange-100 text-orange-800 border border-orange-300">
+                Formula Input
+              </span>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+              <div>
+                <label class="block font-bold text-orange-900 mb-1">🟠 Draft(midship) Arrival cond. (m) *</label>
+                <input type="number" step="0.001" id="req-draft-midship" value="11.500" required class="w-full px-3 py-2 rounded-lg border orange-field font-mono font-bold" />
+                <span class="text-[10px] text-orange-600">กินน้ำลึกกลางลำในแผนจัดระวาง (Stowage)</span>
+              </div>
+
+              <div>
+                <label class="block font-bold text-orange-900 mb-1">🟠 Manifold's Height Restriction (m) *</label>
+                <input type="number" step="0.001" id="req-manifold-height-limit" value="15.200" required class="w-full px-3 py-2 rounded-lg border orange-field font-mono font-bold" />
+                <span class="text-[10px] text-orange-600">ข้อจำกัดความสูงท่อหน้าท่าเรือ</span>
+              </div>
+
+              <div>
+                <label class="block font-bold text-orange-900 mb-1">🟠 Shore's Min Loading Rate (m³/hr) *</label>
+                <input type="number" id="req-shore-min-flow" value="1000" required class="w-full px-3 py-2 rounded-lg border orange-field font-mono font-bold" />
+                <span class="text-[10px] text-orange-600">อัตราการสูบถ่ายขั้นต่ำของฝั่งท่าเรือ</span>
+              </div>
+
+              <div>
+                <label class="block font-bold text-orange-900 mb-1">🟠 No. of Shore Manifold (Min Req) *</label>
+                <input type="number" id="req-shore-manifold-qty" value="2" required class="w-full px-3 py-2 rounded-lg border orange-field font-mono font-bold" />
+                <span class="text-[10px] text-orange-600">จำนวนสายรับส่งท่อขั้นต่ำที่ท่าต้องการ</span>
+              </div>
+
+              <div>
+                <label class="block font-bold text-orange-900 mb-1">🟠 Shore Manifold Size (inch) *</label>
+                <input type="number" id="req-shore-size-inch" value="8" required class="w-full px-3 py-2 rounded-lg border orange-field font-mono font-bold" />
+                <span class="text-[10px] text-orange-600">ขนาดหน้าแปลนท่อท่าเรือ (นิ้ว)</span>
+              </div>
+
+              <div>
+                <label class="block font-bold text-orange-900 mb-1">🟠 Shore Manifold Size (mm) *</label>
+                <input type="number" id="req-shore-size-mm" value="203" required class="w-full px-3 py-2 rounded-lg border orange-field font-mono font-bold" />
+                <span class="text-[10px] text-orange-600">ขนาดหน้าแปลนท่อท่าเรือ (มิลลิเมตร)</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Card 3: Dynamic Required Documents Checklist (From Required Doc. Sheet) -->
+          <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+              <h3 class="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                <span class="w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center text-[10px]">3</span>
+                รายการเอกสารแนบตามเงื่อนไขท่าเรือ (Dynamic Required Document Attachments)
+              </h3>
+              <span id="doc-policy-badge" class="text-[11px] font-bold text-blue-600">Auto Filtered by BU & Terminal</span>
+            </div>
+
+            <div id="dynamic-docs-list" class="space-y-2.5 text-xs">
+              <!-- Populated dynamically based on selected BU and Terminal -->
+            </div>
+            
+            <div class="text-[11px] text-slate-500 bg-slate-50 p-2.5 rounded-lg flex items-center gap-2">
+              <i class="fa-solid fa-circle-info text-blue-500"></i>
+              <span>นโยบายความปลอดภัย: ระบบจะดึงข้อมูลผ่าน AI OCR ชั่วคราว และ<b>ไม่เก็บไฟล์เอกสารฉบับเต็มลง Server/DB</b> ตามเกณฑ์ Step 9</span>
+            </div>
+          </div>
+
+          <!-- Form Actions -->
+          <div class="flex items-center justify-end gap-3 pt-2">
+            <button type="button" onclick="navigate('dashboard')" class="px-5 py-2.5 rounded-xl border border-slate-300 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition">
+              ยกเลิก
+            </button>
+            <button type="submit" class="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white text-xs font-bold px-6 py-2.5 rounded-xl shadow-lg shadow-blue-500/20 flex items-center gap-2 transition transform active:scale-95">
+              <i class="fa-solid fa-wand-magic-sparkles"></i>
+              <span>เริ่มต้น AI OCR Extraction & Run Rule Engine (Step 5)</span>
+            </button>
+          </div>
+        </form>
+
+      </section>
+
+      <!-- ================= STEP 5: AI OCR EXTRACTION MODAL ================= -->
+      <div id="ai-modal" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 text-center shadow-2xl border border-slate-100 space-y-4 animate-fade-in">
+          <div class="w-16 h-16 rounded-2xl bg-blue-50 text-blue-600 mx-auto flex items-center justify-center text-2xl shadow-inner relative">
+            <i class="fa-solid fa-compass-drafting animate-spin"></i>
+            <span class="absolute -top-1 -right-1 w-4 h-4 bg-cyan-400 rounded-full animate-ping"></span>
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-slate-900">กำลังถอดความเอกสารและรัน Rule Engine</h3>
+            <p class="text-xs text-slate-500 mt-1">กำลังจำลองการอ่านไฟล์ Atlantic Explorer_Q88 V6 (14 หน้า)...</p>
+          </div>
+
+          <!-- Progress Log Steps -->
+          <div class="space-y-2 text-left bg-slate-50 p-3.5 rounded-xl border border-slate-100 text-xs font-mono">
+            <div class="flex items-center gap-2 text-emerald-600">
+              <i class="fa-solid fa-circle-check"></i> <span>OCR Preprocessing: PDF Text Layer Extracted</span>
+            </div>
+            <div class="flex items-center gap-2 text-emerald-600">
+              <i class="fa-solid fa-circle-check"></i> <span>54 Parameters mapped from Q88 Tables</span>
+            </div>
+            <div class="flex items-center gap-2 text-blue-600 animate-pulse">
+              <i class="fa-solid fa-spinner fa-spin"></i> <span>Evaluating Stability & Shore Restrictions...</span>
+            </div>
+          </div>
+
+          <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+            <div id="ai-progress-bar" class="bg-gradient-to-r from-blue-600 to-cyan-500 h-2 rounded-full transition-all duration-300" style="width: 30%"></div>
+          </div>
+          <div class="text-[11px] text-slate-400">Processing with Gemini Vision & OCR Parser Engine</div>
+        </div>
+      </div>
+
+      <!-- ================= SCREEN 6, 7, 8, 9: REVIEW RESULT & INLINE EDIT ================= -->
+      <section id="view-review" class="screen-view hidden p-6 space-y-4 max-w-[1600px] mx-auto">
+        
+        <!-- Sticky Review Header Bar -->
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-4">
+          <div class="flex items-center gap-3">
+            <button onclick="navigate('dashboard')" class="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600 text-xs">
+              <i class="fa-solid fa-arrow-left"></i>
+            </button>
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="text-xs font-mono bg-blue-100 text-blue-800 px-2 py-0.5 rounded font-bold" id="rev-badge-req-id">REQ-20260901-01</span>
+                <h2 class="text-base font-bold text-slate-900" id="rev-header-vsl-name">MT ATLANTIC EXPLORER</h2>
+                <span class="text-xs text-slate-500 font-mono">(IMO: 9397212)</span>
+                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700" id="rev-badge-terminal">GC SPM</span>
+              </div>
+              <p class="text-[11px] text-slate-500 mt-0.5">
+                Laycan: <span class="font-semibold text-slate-700">10/09/2026 - 15/09/2026</span> | 
+                Discharge Target: <span class="font-semibold text-slate-700">15/09/2026</span> | 
+                Rule Profile: <span class="font-semibold text-blue-700" id="rev-rule-profile-label">GC Standard + Q23</span>
+              </p>
+            </div>
+          </div>
+
+          <!-- Overall Status Badge -->
+          <div class="flex items-center gap-3">
+            <div class="text-right">
+              <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Overall Rule Status</div>
+              <div id="review-overall-badge" class="badge-fail px-3 py-1 rounded-full text-xs font-bold inline-flex items-center gap-1.5 shadow-sm">
+                <i class="fa-solid fa-circle-xmark"></i> ❌ FAILED (2 Issues Found)
+              </div>
+            </div>
+            <button onclick="recalculateAllRules()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-4 py-2 rounded-xl flex items-center gap-1.5 shadow-sm transition active:scale-95">
+              <i class="fa-solid fa-arrows-rotate"></i> Recalculate
+            </button>
+          </div>
+        </div>
+
+        <!-- Split Screen View: Left Document Preview vs Right Rule Engine -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+          
+          <!-- LEFT PANEL: Interactive Document Viewer with Bounding Boxes (5 cols) -->
+          <div class="lg:col-span-5 bg-slate-900 rounded-2xl border border-slate-800 p-4 text-white shadow-xl flex flex-col h-[760px]">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-800 text-xs">
+              <div class="flex items-center gap-2">
+                <i class="fa-solid fa-file-pdf text-rose-500 text-sm"></i>
+                <span class="font-bold truncate max-w-[200px]">1. Atlantic Explorer_Q88 V6.pdf</span>
+              </div>
+              <div class="flex items-center gap-2 text-[11px] text-slate-400">
+                <span class="bg-slate-800 px-2 py-0.5 rounded" id="pdf-page-indicator">Page 3 of 14</span>
+                <button onclick="showToast('Zooming is enabled on mobile/desktop', 'info')" class="hover:text-white"><i class="fa-solid fa-magnifying-glass-plus"></i></button>
+              </div>
+            </div>
+
+            <!-- PDF Page Simulation Content Container -->
+            <div class="flex-1 overflow-y-auto p-4 space-y-4 font-mono text-xs text-slate-300 bg-slate-950/60 rounded-xl mt-3 border border-slate-800/80 select-text" id="pdf-viewer-content">
+              
+              <div class="text-[11px] text-slate-500 border-b border-slate-800 pb-1.5 flex justify-between">
+                <span>INTERTANKO CHARTERING QUESTIONNAIRE 88 (OIL) - V6</span>
+                <span class="text-blue-400">Extracted by AI OCR (Conf: 98.4%)</span>
+              </div>
+
+              <!-- Excerpt Page 1 -->
+              <div class="p-3 rounded-lg bg-slate-900/90 border border-slate-800 space-y-1">
+                <div class="text-[10px] text-slate-400 uppercase font-bold">1. General Information</div>
+                <div id="bbox-q88-date" class="bounding-box border-blue-500 p-1.5 rounded bg-blue-950/30">
+                  <span class="text-slate-400">1.1 Date updated:</span> <b class="text-yellow-400">July 05, 2024</b>
+                </div>
+                <div><span class="text-slate-400">1.2 Vessel Name (IMO):</span> Atlantic Explorer (9397212)</div>
+                <div><span class="text-slate-400">1.4 Date delivered:</span> Sep 24, 2008 / Mitsui Chiba Works</div>
+              </div>
+
+              <!-- Excerpt Page 2: Insurance & Surveys -->
+              <div class="p-3 rounded-lg bg-slate-900/90 border border-slate-800 space-y-1.5">
+                <div class="text-[10px] text-slate-400 uppercase font-bold">Insurance & Dry-dock</div>
+                <div id="bbox-pi-expiry" class="bounding-box border-rose-500 p-1.5 rounded bg-rose-950/30">
+                  <span class="text-slate-400">1.15 P&I Club Liability Exp:</span> <b class="text-rose-400">Feb 20, 2025</b>
+                </div>
+                <div><span class="text-slate-400">1.17 H&M Insured Exp:</span> Jun 01, 2025</div>
+                <div id="bbox-drydock" class="bounding-box border-amber-500 p-1.5 rounded bg-amber-950/30">
+                  <span class="text-slate-400">1.24 Date next dry dock due:</span> <b class="text-amber-400">Sep 05, 2024</b>
+                </div>
+              </div>
+
+              <!-- Excerpt Page 3: Dimensions & Loadline -->
+              <div class="p-3 rounded-lg bg-slate-900/90 border border-slate-800 space-y-1.5">
+                <div class="text-[10px] text-slate-400 uppercase font-bold">Dimensions & Loadline Information</div>
+                <div><span class="text-slate-400">1.27 Length overall (LOA):</span> 245.50 Metres</div>
+                <div><span class="text-slate-400">1.33 BCM:</span> 123.10 m | <span class="text-slate-400">SCM:</span> 122.40 m</div>
+                <div id="bbox-moulded" class="bounding-box border-blue-500 p-1.5 rounded bg-blue-950/30">
+                  <span class="text-slate-400">1.30 Moulded depth:</span> <b class="text-cyan-400">21.50 Metres</b>
+                </div>
+                <div id="bbox-loadline" class="bounding-box border-purple-500 p-1.5 rounded bg-purple-950/30">
+                  <span class="text-slate-400">1.39 Summer Condition:</span><br>
+                  - Freeboard: <b class="text-cyan-300">6.58 m</b> | Draft: <b class="text-cyan-300">14.89 m</b><br>
+                  - Deadweight: 92,322 MT | Displacement: 110,077 MT<br>
+                  - Lightship: <b class="text-yellow-300">17,755 MT</b>
+                </div>
+              </div>
+
+              <!-- Excerpt Page 7/8: Manifold & Reducers -->
+              <div class="p-3 rounded-lg bg-slate-900/90 border border-slate-800 space-y-1.5">
+                <div class="text-[10px] text-slate-400 uppercase font-bold">Cargo Manifolds & Reducers</div>
+                <div><span class="text-slate-400">8.5 Max loading rate (homogenous):</span> 11,800 m³/hr</div>
+                <div><span class="text-slate-400">8.15 No. of manifold connections:</span> 3 each side (Size: 508 mm / 20")</div>
+                <div><span class="text-slate-400">8.22 Dist main deck to center manifold:</span> <b class="text-cyan-300">1,900 mm (1.90 m)</b></div>
+                <div id="bbox-reducers" class="bounding-box border-emerald-500 p-1.5 rounded bg-emerald-950/30">
+                  <span class="text-slate-400">8.25 Reducers:</span><br>
+                  6 x 508/406.4mm (20/16") | 3 x 508/304.8mm (20/12")<br>
+                  <b class="text-emerald-400">3 x 508/203.2mm (20/8") ANSI</b>
+                </div>
+              </div>
+
+            </div>
+
+            <div class="pt-3 text-[11px] text-slate-400 flex items-center justify-between border-t border-slate-800">
+              <span>คลิกที่ข้อตรวจด้านขวาเพื่อกระโดดดู Bounding Box</span>
+              <span class="text-blue-400 font-semibold"><i class="fa-solid fa-lock text-[9px]"></i> Read-Only Proof</span>
+            </div>
+          </div>
+
+          <!-- RIGHT PANEL: Categorized Rule Engine & Inline Edits (7 cols) -->
+          <div class="lg:col-span-7 space-y-4">
+            
+            <!-- Quick Filter Bar for Rules -->
+            <div class="bg-white p-2.5 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+              <div class="flex gap-1.5" id="rule-filter-pills">
+                <button onclick="filterRuleCards('ALL')" class="rule-pill px-3 py-1 text-xs font-bold rounded-lg bg-slate-900 text-white">All Rules (11)</button>
+                <button onclick="filterRuleCards('FAIL')" class="rule-pill px-3 py-1 text-xs font-bold rounded-lg bg-rose-50 text-rose-700 hover:bg-rose-100">Fails (2)</button>
+                <button onclick="filterRuleCards('WARNING')" class="rule-pill px-3 py-1 text-xs font-bold rounded-lg bg-amber-50 text-amber-700 hover:bg-amber-100">Warnings (1)</button>
+                <button onclick="filterRuleCards('PASS')" class="rule-pill px-3 py-1 text-xs font-bold rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100">Pass (8)</button>
+              </div>
+              <span class="text-[11px] text-slate-400 hidden sm:inline"><i class="fa-solid fa-pen text-slate-400"></i> กล่องข้อความสีขาวสามารถ Inline Edit ได้</span>
+            </div>
+
+            <!-- Validation Cards Accordion Groups -->
+            <div class="space-y-3.5" id="rule-cards-container">
+              
+              <!-- GROUP 1: General & Document Validity -->
+              <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                <div class="p-3.5 bg-slate-50 border-b border-slate-100 font-bold text-xs text-slate-700 flex justify-between items-center">
+                  <span>หมวดที่ 1: การตรวจสอบวันที่และความถูกต้องเอกสาร (General & Dates)</span>
+                  <span class="text-[11px] text-slate-400">Rule Criteria</span>
+                </div>
+                
+                <div class="p-4 space-y-3">
+                  <!-- Rule: Q88 Date -->
+                  <div class="rule-card p-3 rounded-xl border border-rose-200 bg-rose-50/20 space-y-2" data-status="FAIL" onclick="highlightPdfBbox('bbox-q88-date')">
+                    <div class="flex items-center justify-between">
+                      <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-calendar-check text-blue-600 text-xs"></i>
+                        <h4 class="font-bold text-xs text-slate-800">Q88 Issue Date Validity (อายุเอกสารแบบสอบถาม Q88)</h4>
+                      </div>
+                      <span id="badge-q88-date" class="badge-fail px-2 py-0.5 rounded-full text-[10px] font-bold">❌ FAIL</span>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                      <div class="bg-white p-2 rounded-lg border border-slate-200">
+                        <span class="text-[10px] text-slate-400 block">Extracted Q88 Date: (แก้ไขได้)</span>
+                        <input type="date" id="input-q88-date" value="2024-07-05" class="w-full font-mono text-xs font-bold text-slate-900 border-b border-blue-400 focus:outline-none" />
+                      </div>
+                      <div class="bg-slate-50 p-2 rounded-lg border border-slate-100">
+                        <span class="text-[10px] text-slate-400 block">Nomination Date / เกณฑ์ที่กำหนด:</span>
+                        <span class="font-mono font-bold text-slate-700">01/09/2026 (≤ 14 วัน)</span>
+                      </div>
+                    </div>
+
+                    <div class="text-[11px] font-mono text-slate-600 bg-slate-50 p-1.5 rounded">
+                      สูตร: <span class="text-blue-700">Nomination Date - Q88 Date ≤ 14 วัน</span>
+                    </div>
+                    <div id="msg-q88-date" class="text-xs font-medium text-rose-600">
+                      <i class="fa-solid fa-circle-exclamation mr-1"></i> อายุเอกสารห่างกัน 789 วัน (เกิน 14 วัน) กรุณาขอเอกสาร Q88 ปรับปรุงใหม่
+                    </div>
+                  </div>
+
+                  <!-- Rule: Vessel Name Match -->
+                  <div class="rule-card p-3 rounded-xl border border-emerald-200 bg-emerald-50/20 space-y-2" data-status="PASS">
+                    <div class="flex items-center justify-between">
+                      <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-ship text-emerald-600 text-xs"></i>
+                        <h4 class="font-bold text-xs text-slate-800">Vessel Name & IMO Match (ชื่อเรือและรหัส IMO)</h4>
+                      </div>
+                      <span class="badge-pass px-2 py-0.5 rounded-full text-[10px] font-bold">✅ PASS</span>
+                    </div>
+                    <div class="text-xs text-slate-600">
+                      ค่าที่ดึงได้จาก Q88: <b>Atlantic Explorer (IMO: 9397212)</b> ตรงกับแบบฟอร์มขอเทียบท่า 100%
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- GROUP 2: Insurance Validation -->
+              <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                <div class="p-3.5 bg-slate-50 border-b border-slate-100 font-bold text-xs text-slate-700 flex justify-between items-center">
+                  <span>หมวดที่ 2: ความคุ้มครองประกันภัย (Insurance Coverage)</span>
+                  <span class="text-[11px] text-blue-600 font-semibold" id="group-ins-rule-pill">GC Rule: Laycan End + 7 Days</span>
+                </div>
+                
+                <div class="p-4 space-y-3">
+                  <!-- Rule: P&I Insurance -->
+                  <div class="rule-card p-3 rounded-xl border border-rose-200 bg-rose-50/20 space-y-2" data-status="FAIL" onclick="highlightPdfBbox('bbox-pi-expiry')">
+                    <div class="flex items-center justify-between">
+                      <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-shield-halved text-rose-600 text-xs"></i>
+                        <h4 class="font-bold text-xs text-slate-800">P&I Insurance Expiry (วันหมดอายุประกันภัย P&I Club)</h4>
+                      </div>
+                      <span id="badge-pi-expiry" class="badge-fail px-2 py-0.5 rounded-full text-[10px] font-bold">❌ FAIL</span>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                      <div class="bg-white p-2 rounded-lg border border-slate-200">
+                        <span class="text-[10px] text-slate-400 block">Extracted P&I Expiry Date: (แก้ไขได้)</span>
+                        <input type="date" id="input-pi-date" value="2025-02-20" class="w-full font-mono text-xs font-bold text-slate-900 border-b border-blue-400 focus:outline-none" />
+                      </div>
+                      <div class="bg-slate-50 p-2 rounded-lg border border-slate-100">
+                        <span class="text-[10px] text-slate-400 block">วันสิ้นสุดขนถ่าย + ข้อกำหนด BU:</span>
+                        <span class="font-mono font-bold text-slate-700" id="label-pi-required">≥ 22/09/2026 (Laycan+7d)</span>
+                      </div>
+                    </div>
+
+                    <div id="msg-pi-expiry" class="text-xs font-medium text-rose-600">
+                      <i class="fa-solid fa-circle-exclamation mr-1"></i> ประกันภัยหมดอายุวันที่ 20/02/2025 ไม่ครอบคลุมวันสุดท้ายของ Laycan + 7 วัน
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- GROUP 3: Stability, Dimensions & Internal Check -->
+              <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                <div class="p-3.5 bg-slate-50 border-b border-slate-100 font-bold text-xs text-slate-700 flex justify-between items-center">
+                  <span>หมวดที่ 3: มิติเรือและความสมดุลตัวเลข (Stability & Internal Check)</span>
+                  <span class="text-[11px] text-slate-400">Technical Checks</span>
+                </div>
+                
+                <div class="p-4 space-y-3">
+                  <!-- Rule: Moulded Depth -->
+                  <div class="rule-card p-3 rounded-xl border border-amber-200 bg-amber-50/20 space-y-2" data-status="WARNING" onclick="highlightPdfBbox('bbox-moulded')">
+                    <div class="flex items-center justify-between">
+                      <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-ruler-combined text-amber-600 text-xs"></i>
+                        <h4 class="font-bold text-xs text-slate-800">Moulded Depth vs Draft + Freeboard Balance</h4>
+                      </div>
+                      <span id="badge-moulded-depth" class="badge-warn px-2 py-0.5 rounded-full text-[10px] font-bold">⚠️ WARNING</span>
+                    </div>
+
+                    <div class="grid grid-cols-3 gap-2 text-xs">
+                      <div class="bg-white p-2 rounded-lg border border-slate-200">
+                        <span class="text-[10px] text-slate-400 block">Moulded Depth (m):</span>
+                        <input type="number" step="0.01" id="input-moulded-depth" value="21.50" class="w-full font-mono text-xs font-bold text-slate-900 border-b border-blue-400 focus:outline-none" />
+                      </div>
+                      <div class="bg-white p-2 rounded-lg border border-slate-200">
+                        <span class="text-[10px] text-slate-400 block">Summer Draft (m):</span>
+                        <input type="number" step="0.01" id="input-summer-draft" value="14.89" class="w-full font-mono text-xs font-bold text-slate-900 border-b border-blue-400 focus:outline-none" />
+                      </div>
+                      <div class="bg-white p-2 rounded-lg border border-slate-200">
+                        <span class="text-[10px] text-slate-400 block">Summer Freeboard (m):</span>
+                        <input type="number" step="0.01" id="input-summer-fb" value="6.58" class="w-full font-mono text-xs font-bold text-slate-900 border-b border-blue-400 focus:outline-none" />
+                      </div>
+                    </div>
+
+                    <div class="text-[11px] font-mono text-slate-600 bg-slate-50 p-1.5 rounded">
+                      คำนวณ: <span id="label-depth-math">Draft (14.89) + Freeboard (6.58) = 21.47 m vs 21.50 m (Diff 0.03 m)</span>
+                    </div>
+                    <div id="msg-moulded-depth" class="text-xs font-medium text-amber-700">
+                      <i class="fa-solid fa-triangle-exclamation mr-1"></i> ผลรวมต่างกัน 0.03 m (อนุโลมเป็นความหนากระดูกงู Keel Thickness ไม่เกิน 0.05 m)
+                    </div>
+                  </div>
+
+                  <!-- Rule: Lightship Weight -->
+                  <div class="rule-card p-3 rounded-xl border border-emerald-200 bg-emerald-50/20 space-y-1.5" data-status="PASS" onclick="highlightPdfBbox('bbox-loadline')">
+                    <div class="flex items-center justify-between">
+                      <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-weight-hanging text-emerald-600 text-xs"></i>
+                        <h4 class="font-bold text-xs text-slate-800">Lightship Weight Balance (Disp - Dwt)</h4>
+                      </div>
+                      <span class="badge-pass px-2 py-0.5 rounded-full text-[10px] font-bold">✅ PASS</span>
+                    </div>
+                    <div class="text-xs text-slate-600">
+                      Displacement (110,077 MT) - Deadweight (92,322 MT) = <b>17,755 MT</b> เท่ากับตาราง Lightship Weight ใน Q88
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- GROUP 4: Terminal Restriction & Manifold Height -->
+              <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                <div class="p-3.5 bg-slate-50 border-b border-slate-100 font-bold text-xs text-slate-700 flex justify-between items-center">
+                  <span>หมวดที่ 4: ข้อจำกัดหน้าท่าและท่อรับส่ง (Terminal Restriction & Manifold)</span>
+                  <span class="text-[11px] text-orange-600 font-semibold">Uses Orange Input Fields</span>
+                </div>
+                
+                <div class="p-4 space-y-3">
+                  <!-- Calculated Manifold Height -->
+                  <div class="rule-card p-3 rounded-xl border border-emerald-200 bg-emerald-50/20 space-y-2" data-status="PASS">
+                    <div class="flex items-center justify-between">
+                      <h4 class="font-bold text-xs text-slate-800">Calculated Manifold Height (คำนวณความสูงท่อกึ่งกลางขณะเทียบท่า)</h4>
+                      <span id="badge-calc-height" class="badge-pass px-2 py-0.5 rounded-full text-[10px] font-bold">✅ PASS</span>
+                    </div>
+
+                    <div class="bg-slate-50 p-2.5 rounded-lg border border-slate-200 text-xs font-mono space-y-1">
+                      <div>สูตร: Moulded Depth (21.50) - Draft midship (<span class="text-orange-700 font-bold" id="label-math-draft">11.50</span>) + Deck to Center (1.90)</div>
+                      <div class="text-sm font-bold text-slate-900">
+                        = <span id="label-calculated-height-val" class="text-blue-700">11.900</span> m 
+                        <span class="text-xs font-normal text-slate-500">(&lt; ข้อจำกัดหน้าท่า <span id="label-math-limit" class="font-bold text-orange-700">15.200</span> m)</span>
+                      </div>
+                    </div>
+                    <div id="msg-calc-height" class="text-xs font-medium text-emerald-700">
+                      <i class="fa-solid fa-circle-check mr-1"></i> ความสูงท่อสินค้าไม่เกินข้อกำหนดความสูงของท่าเทียบเรือ GC SPM
+                    </div>
+                  </div>
+
+                  <!-- Reducer Matching -->
+                  <div class="rule-card p-3 rounded-xl border border-emerald-200 bg-emerald-50/20 space-y-1.5" data-status="PASS" onclick="highlightPdfBbox('bbox-reducers')">
+                    <div class="flex items-center justify-between">
+                      <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-diagram-project text-emerald-600 text-xs"></i>
+                        <h4 class="font-bold text-xs text-slate-800">Reducer Matching (ขนาดข้อลดเทียบกับท่อหน้าท่า: Shore 8 Inch)</h4>
+                      </div>
+                      <span class="badge-pass px-2 py-0.5 rounded-full text-[10px] font-bold">✅ PASS</span>
+                    </div>
+                    <div class="text-xs text-slate-600">
+                      ท่าเรือต้องการขนาด <b>8 นิ้ว (203.2 mm)</b> | เรือมีข้อลดขนาด <b>3 x 508/203.2 mm (20/8" ANSI)</b> แมตช์พอดี
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- GROUP 5: Maintenance & Age -->
+              <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                <div class="p-3.5 bg-slate-50 border-b border-slate-100 font-bold text-xs text-slate-700 flex justify-between items-center">
+                  <span>หมวดที่ 5: การบำรุงรักษาและอายุเรือ (Maintenance & Vessel Age)</span>
+                  <span class="text-[11px] text-slate-400">Class & Survey Checks</span>
+                </div>
+                
+                <div class="p-4 space-y-3">
+                  <!-- Rule: Next Dry Dock -->
+                  <div class="rule-card p-3 rounded-xl border border-rose-200 bg-rose-50/20 space-y-1.5" data-status="FAIL" onclick="highlightPdfBbox('bbox-drydock')">
+                    <div class="flex items-center justify-between">
+                      <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-wrench text-rose-600 text-xs"></i>
+                        <h4 class="font-bold text-xs text-slate-800">Next Dry Dock Due (กำหนดการเข้าอู่แห้งรอบถัดไป)</h4>
+                      </div>
+                      <span id="badge-drydock" class="badge-fail px-2 py-0.5 rounded-full text-[10px] font-bold">❌ FAIL</span>
+                    </div>
+                    <div class="text-xs text-slate-600">
+                      วันเข้าอู่แห้งตามเอกสาร: <b>05/09/2024</b> (หมดอายุไปแล้วเมื่อเทียบกับกำหนดเทียบท่าปี 2026)
+                    </div>
+                  </div>
+
+                  <!-- Rule: Vessel Age -->
+                  <div class="rule-card p-3 rounded-xl border border-emerald-200 bg-emerald-50/20 space-y-1.5" data-status="PASS">
+                    <div class="flex items-center justify-between">
+                      <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-hourglass-half text-emerald-600 text-xs"></i>
+                        <h4 class="font-bold text-xs text-slate-800">Vessel Age Limit (เกณฑ์อายุของเรือ ≤ 25 ปี)</h4>
+                      </div>
+                      <span class="badge-pass px-2 py-0.5 rounded-full text-[10px] font-bold">✅ PASS</span>
+                    </div>
+                    <div class="text-xs text-slate-600">
+                      วันที่ต่อเรือเสร็จ (Sep 2008) ถึงวัน Laycan = <b>18 ปี</b> (ผ่านเกณฑ์ไม่เกิน 25 ปี)
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- BOTTOM PANEL: Steps 8 & 9 - User Action & Submission -->
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-md space-y-3.5">
+              <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+                <span class="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                  <i class="fa-solid fa-gavel text-blue-600"></i> Step 8: การตัดสินใจอนุมัติผลการประเมิน (User Clearance Decision)
+                </span>
+                <span class="text-[11px] text-slate-400">Recorded with Azure AD Signature</span>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <label class="flex items-center gap-3 p-3 rounded-xl border border-emerald-200 bg-emerald-50/50 cursor-pointer hover:bg-emerald-50 transition">
+                  <input type="radio" name="final_decision" value="ACCEPT" id="radio-accept" class="w-4 h-4 text-emerald-600 focus:ring-emerald-500" />
+                  <div>
+                    <div class="font-bold text-xs text-emerald-900">ACCEPT (ยอมรับ / ผ่านการประเมิน)</div>
+                    <div class="text-[10px] text-emerald-700">ยืนยันให้เรือเข้าเทียบท่าได้ตามเงื่อนไข</div>
+                  </div>
+                </label>
+
+                <label class="flex items-center gap-3 p-3 rounded-xl border border-rose-200 bg-rose-50/50 cursor-pointer hover:bg-rose-50 transition">
+                  <input type="radio" name="final_decision" value="REJECT" id="radio-reject" checked class="w-4 h-4 text-rose-600 focus:ring-rose-500" />
+                  <div>
+                    <div class="font-bold text-xs text-rose-900">REJECT (ปฏิเสธ / ต้องแก้ไขเอกสาร)</div>
+                    <div class="text-[10px] text-rose-700">ไม่ผ่านเกณฑ์บังคับ ต้องขอเล่ม Q88 หรือประกันใหม่</div>
+                  </div>
+                </label>
+              </div>
+
+              <div>
+                <label class="block text-xs font-medium text-slate-700 mb-1">เหตุผลและข้อคิดเห็นประกอบการตัดสินใจ (Mandatory Justification) *</label>
+                <textarea id="decision-remarks" rows="2" class="w-full text-xs p-2.5 rounded-lg border border-slate-300 focus:ring-1 focus:ring-blue-500 font-sans" placeholder="ระบุเหตุผลในการตัดสินใจ..."></textarea>
+              </div>
+
+              <div class="flex flex-wrap items-center justify-between gap-3 pt-1 border-t border-slate-100">
+                <div class="flex items-center gap-2 text-[11px] text-slate-500">
+                  <i class="fa-solid fa-database text-cyan-600"></i>
+                  <span><b>Step 9 Policy:</b> บันทึกเฉพาะ Result, Values และ Audit Trail (ไม่เก็บไฟล์ PDF ใน DB)</span>
+                </div>
+                <div class="flex gap-2">
+                  <button onclick="navigate('dashboard')" class="px-4 py-2 rounded-xl border border-slate-300 text-xs font-semibold text-slate-700 hover:bg-slate-50">
+                    ปิดหน้านี้
+                  </button>
+                  <button onclick="submitFinalEvaluation()" class="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-bold px-6 py-2 rounded-xl shadow-lg shadow-emerald-600/20 flex items-center gap-2 transition transform active:scale-95">
+                    <i class="fa-solid fa-cloud-arrow-up"></i>
+                    <span>บันทึกผลการประเมินลงฐานข้อมูล (Submit)</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </section>
+
+      <!-- ================= ADMIN SCREEN 1: USER & BU MAPPING ================= -->
+      <section id="view-admin-user" class="screen-view hidden p-6 max-w-6xl mx-auto space-y-6">
+        
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-4">
+          <div>
+            <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-blue-50 text-blue-700 font-bold text-[10px] mb-1">
+              <i class="fa-solid fa-users-gear"></i> User Management &amp; Access Control
+            </div>
+            <h2 class="text-xl font-bold text-slate-900">User Management &amp; Business Unit Mapping</h2>
+          </div>
+          <div class="flex gap-2">
+            <button onclick="openCreateUserModal()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-4 py-2 rounded-xl flex items-center gap-2 shadow-sm transition">
+              <i class="fa-solid fa-user-plus"></i> เพิ่มผู้ใช้งานใหม่ (Create New User)
+            </button>
+          </div>
+        </div>
+
+        <!-- Multi-field Search & Filter Toolbar for Users -->
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-3">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+            <div class="flex items-center gap-2 text-xs font-bold text-slate-700">
+              <i class="fa-solid fa-filter text-blue-600"></i>
+              <span>ค้นหาและกรองข้อมูลผู้ใช้งาน (Search &amp; Filter Users)</span>
+            </div>
+            <button onclick="resetUserFilters()" class="text-[11px] text-slate-400 hover:text-blue-600 font-medium flex items-center gap-1 transition">
+              <i class="fa-solid fa-rotate-left"></i> ล้างตัวกรองทั้งหมด (Reset)
+            </button>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+            <!-- Filter: Name / Email Search -->
+            <div>
+              <label class="block text-[11px] font-semibold text-slate-600 mb-1">ชื่อ หรือ อีเมล (Name / Email)</label>
+              <div class="relative">
+                <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-xs text-slate-400"></i>
+                <input type="text" id="user-filter-keyword" oninput="filterUserTable()" placeholder="ค้นหาชื่อ หรืออีเมล..." class="w-full text-xs pl-8 pr-3 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500 bg-slate-50 focus:bg-white" />
+              </div>
+            </div>
+
+            <!-- Filter: Business Unit -->
+            <div>
+              <label class="block text-[11px] font-semibold text-slate-600 mb-1">Business Unit</label>
+              <select id="user-filter-bu" onchange="filterUserTable()" class="w-full text-xs px-3 py-2 rounded-lg border border-slate-200 bg-white font-medium text-slate-700 focus:ring-1 focus:ring-blue-500">
+                <option value="ALL">ทุก BU (All Business Units)</option>
+                <option value="Crude">Crude</option>
+                <option value="PetChem">PetChem</option>
+                <option value="Product">Product</option>
+                <option value="Chartering">Chartering</option>
+              </select>
+            </div>
+
+            <!-- Filter: Role -->
+            <div>
+              <label class="block text-[11px] font-semibold text-slate-600 mb-1">Role</label>
+              <select id="user-filter-role" onchange="filterUserTable()" class="w-full text-xs px-3 py-2 rounded-lg border border-slate-200 bg-white font-medium text-slate-700 focus:ring-1 focus:ring-blue-500">
+                <option value="ALL">ทุก Role (All Roles)</option>
+                <option value="Admin">Admin</option>
+                <option value="Super Admin">Super Admin</option>
+                <option value="Requester">Requester</option>
+              </select>
+            </div>
+
+            <!-- Filter: Status -->
+            <div>
+              <label class="block text-[11px] font-semibold text-slate-600 mb-1">Status</label>
+              <select id="user-filter-status" onchange="filterUserTable()" class="w-full text-xs px-3 py-2 rounded-lg border border-slate-200 bg-white font-semibold text-slate-700 focus:ring-1 focus:ring-blue-500">
+                <option value="ALL">ทุกสถานะ (All Status)</option>
+                <option value="Active">Active (ใช้งานได้)</option>
+                <option value="Pending">Pending (รอดำเนินการ)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- User Directory Table -->
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+          <div class="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+            <span class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+              <i class="fa-solid fa-address-book text-blue-600"></i> รายชื่อผู้ใช้งานในระบบ (ดับเบิ้ลคลิกแถวเพื่อแก้ไขข้อมูล)
+            </span>
+            <span class="text-xs text-slate-500" id="user-count-badge">แสดง 5 รายการ</span>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-50 text-slate-600 uppercase font-semibold border-b border-slate-200">
+                <tr>
+                  <th class="px-4 py-3">Name</th>
+                  <th class="px-4 py-3">Email</th>
+                  <th class="px-4 py-3">Business Unit</th>
+                  <th class="px-4 py-3">Role</th>
+                  <th class="px-4 py-3">Status</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 font-medium" id="admin-user-tbody">
+                <!-- Populated by JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- ================= ADMIN SCREEN 2: PORT & CRITERIA MANAGEMENT ================= -->
+      <section id="view-admin-port" class="screen-view hidden p-6 max-w-6xl mx-auto space-y-6">
+        
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-4">
+          <div>
+            <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-amber-50 text-amber-700 font-bold text-[10px] mb-1">
+              <i class="fa-solid fa-sliders"></i> Logic Engine Configuration
+            </div>
+            <h2 class="text-xl font-bold text-slate-900">Port Management & Calculation Criteria</h2>
+            <p class="text-xs text-slate-500">
+              สร้างท่าเรือใหม่ หรือปรับแต่ง Criteria ในการคำนวณแต่ละ Port โดยเลือกใช้ Logic ที่มีอยู่บนระบบ
+            </p>
+          </div>
+          <button onclick="openCreatePortModal()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-4 py-2 rounded-xl flex items-center gap-2 shadow-sm">
+            <i class="fa-solid fa-plus"></i> เพิ่มท่าเรือใหม่ (Create New Port)
+          </button>
+        </div>
+
+        <!-- Terminals Master Table -->
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+          <div class="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+            <div class="flex items-center gap-2">
+              <select class="text-xs px-3 py-1.5 rounded-lg border border-slate-200 bg-white font-medium" onchange="filterTerminalTableByBu(this.value)">
+                <option value="ALL">Filter Terminal Group: All (19 Terminals)</option>
+                <option value="GC">GC (4 Terminals)</option>
+                <option value="IRPC">IRPC (4 Terminals)</option>
+                <option value="TOP">TOP (4 Terminals)</option>
+                <option value="PTTTANK">PTT TANK (1 Terminal)</option>
+                <option value="OR">OR (6 Terminals)</option>
+              </select>
+            </div>
+            <span class="text-xs text-slate-500" id="terminal-count-badge">Displaying 19 Registered Ports</span>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-50 text-slate-600 uppercase font-semibold border-b border-slate-200">
+                <tr>
+                  <th class="px-4 py-3">ID</th>
+                  <th class="px-4 py-3">Terminal Group</th>
+                  <th class="px-4 py-3">ชื่อท่าเรือ (Terminal Display Name)</th>
+                  <th class="px-4 py-3 text-right">การจัดการ (Actions)</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 font-medium" id="admin-port-tbody">
+                <!-- Populated by JS from Terminal List -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </section>
+
+    </div>
+  </main>
+
+  <!-- ================= MODALS & OVERLAYS ================= -->
+
+  <!-- Modal 1: Azure AD SSO Switcher Simulation -->
+  <div id="modal-sso" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl border border-slate-200">
+      <div class="flex items-center justify-between border-b pb-3">
+        <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+          <i class="fa-brands fa-microsoft text-blue-600"></i> สลับบัญชีทดสอบ Azure AD (Persona Switcher)
+        </h3>
+        <button onclick="closeSsoModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <p class="text-xs text-slate-500">เลือกบัญชีจำลองเพื่อทดสอบว่า Rule Engine ปรับเปลี่ยนตาม BU จริง</p>
+      
+      <div class="space-y-2 text-xs" id="sso-user-list">
+        <!-- Populated by JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Create / Edit User (Admin Screen 1) -->
+  <div id="modal-user-form" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-2xl border border-slate-200">
+      <div class="flex items-center justify-between border-b pb-3">
+        <div>
+          <div class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-blue-50 text-blue-700 font-bold text-[10px] mb-1">
+            <i class="fa-solid fa-user-gear"></i> User Profile &amp; Role Management
+          </div>
+          <h3 class="text-base font-bold text-slate-900 flex items-center gap-2" id="user-modal-title">
+            <i class="fa-solid fa-user-plus text-blue-600"></i> เพิ่มผู้ใช้งานใหม่ (Create New User)
+          </h3>
+        </div>
+        <button onclick="closeUserModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+
+      <form id="form-user-modal" onsubmit="handleSaveUser(event)" class="space-y-4 text-xs">
+        <input type="hidden" id="user-form-id" value="" />
+        
+        <!-- Name -->
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">ชื่อ - นามสกุล (Name) *</label>
+          <input type="text" id="user-form-name" required placeholder="e.g. Somchai Prasert" class="w-full border border-slate-300 rounded-lg px-3 py-2 bg-white font-medium focus:ring-1 focus:ring-blue-500" />
+        </div>
+
+        <!-- Email -->
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">อีเมล (Email) *</label>
+          <input type="email" id="user-form-email" required placeholder="e.g. somchai.p@pttgcgroup.com" class="w-full border border-slate-300 rounded-lg px-3 py-2 bg-white font-mono font-medium focus:ring-1 focus:ring-blue-500" />
+        </div>
+
+        <!-- Business Unit & Role (2 Columns) -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Business Unit *</label>
+            <select id="user-form-bu" class="w-full border border-slate-300 rounded-lg px-3 py-2 bg-white font-bold text-blue-700 focus:ring-1 focus:ring-blue-500">
+              <option value="Crude">Crude</option>
+              <option value="PetChem">PetChem</option>
+              <option value="Product">Product</option>
+              <option value="Chartering">Chartering</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Role *</label>
+            <select id="user-form-role" class="w-full border border-slate-300 rounded-lg px-3 py-2 bg-white font-bold text-purple-700 focus:ring-1 focus:ring-blue-500">
+              <option value="Admin">Admin</option>
+              <option value="Super Admin">Super Admin</option>
+              <option value="Requester">Requester</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Status -->
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">สถานะผู้ใช้งาน (Status) *</label>
+          <select id="user-form-status" class="w-full border border-slate-300 rounded-lg px-3 py-2 bg-white font-semibold text-slate-800 focus:ring-1 focus:ring-blue-500">
+            <option value="Active">Active (เปิดใช้งาน)</option>
+            <option value="Pending">Pending (รอดำเนินการ)</option>
+          </select>
+        </div>
+
+        <div class="flex justify-end gap-2 pt-3 border-t border-slate-200">
+          <button type="button" onclick="closeUserModal()" class="px-4 py-2 border rounded-xl font-semibold text-slate-700 hover:bg-slate-50 transition">ยกเลิก</button>
+          <button type="submit" class="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-bold px-5 py-2 rounded-xl shadow-md transition flex items-center gap-2">
+            <i class="fa-solid fa-floppy-disk"></i>
+            <span>บันทึกข้อมูลผู้ใช้งาน</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal 2: Create / Edit Port & Customize Logic (Admin Screen 2 - Admin Only Feature) -->
+  <div id="modal-create-port" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-2xl max-w-3xl w-full p-6 space-y-4 shadow-2xl border border-slate-200 max-h-[92vh] overflow-y-auto">
+      <div class="flex items-center justify-between border-b pb-3">
+        <div>
+          <div class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-blue-50 text-blue-700 font-bold text-[10px] mb-1">
+            <i class="fa-solid fa-sliders"></i> Port Criteria & Logic Engine Configuration
+          </div>
+          <h3 class="text-base font-bold text-slate-900 flex items-center gap-2" id="modal-port-title">
+            <i class="fa-solid fa-anchor text-blue-600"></i> ปรับแต่งเกณฑ์คำนวณและระยะเวลา Logic สำหรับท่าเรือ
+          </h3>
+          <p class="text-[11px] text-slate-500">กำหนดเกณฑ์ Logic Rule Engine และระยะเวลาการคำนวณ (เฉพาะผู้ดูแลระบบ Admin เท่านั้นที่มีสิทธิ์แก้ไขและบันทึก)</p>
+        </div>
+        <button onclick="closeCreatePortModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+
+      <!-- Admin Role Permission Banner -->
+      <div id="modal-admin-permission-banner" class="p-2.5 rounded-xl border flex items-center justify-between text-xs transition">
+        <!-- Dynamically injected via checkAdminPermission() -->
+      </div>
+
+      <form onsubmit="handleSaveNewPort(event)" id="form-port-criteria" class="space-y-4 text-xs">
+        <!-- Hidden Port ID Tracking -->
+        <input type="hidden" id="edit-port-id" value="" />
+
+        <!-- Port Master Info -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+          <div>
+            <label class="block font-medium text-slate-700 mb-1">Terminal Group *</label>
+            <select id="new-port-bu" class="port-cfg-input w-full border border-slate-300 rounded-lg px-3 py-2 bg-white font-semibold text-blue-700">
+              <option value="GC">GC (PTT Global Chemical)</option>
+              <option value="IRPC">IRPC</option>
+              <option value="TOP">TOP / TPX</option>
+              <option value="PTTTANK">PTT TANK</option>
+              <option value="OR">OR</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-medium text-slate-700 mb-1">ชื่อท่าเรือ (Terminal Display Name) *</label>
+            <input type="text" id="new-port-display-name" required placeholder="e.g. GC SPM (Offshore)" class="port-cfg-input w-full border border-slate-300 rounded-lg px-3 py-2 bg-white font-semibold" />
+          </div>
+        </div>
+
+        <!-- 11 Selectable Rule Engine Logic & Configurable Durations -->
+        <div class="space-y-2.5 border-t border-slate-100 pt-3">
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-slate-900 text-xs flex items-center gap-1.5">
+              <i class="fa-solid fa-gears text-blue-600"></i>
+              เลือก Logic กฎการคำนวณและปรับระยะเวลา (Select Active Logic & Edit Durations):
+            </span>
+            <span class="text-[10px] text-slate-500 font-semibold bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
+              11 Port Logic Rules
+            </span>
+          </div>
+
+          <div class="space-y-2.5" id="port-logic-rules-list">
+            
+            <!-- 1) Q88 Issue Date Validity -->
+            <div class="bg-white p-3 rounded-xl border border-slate-200 hover:border-slate-300 space-y-2 transition">
+              <div class="flex items-start justify-between">
+                <label class="flex items-center gap-2.5 cursor-pointer font-bold text-slate-800 text-xs">
+                  <input type="checkbox" id="chk-logic-q88" checked class="port-cfg-input rounded text-blue-600 w-4 h-4" />
+                  <span>Q88 Issue Date Validity (อายุเอกสารแบบสอบถาม Q88)</span>
+                </label>
+                <span class="text-[10px] text-blue-600 font-mono font-semibold bg-blue-50 px-2 py-0.5 rounded">Logic 1</span>
+              </div>
+              <p class="text-[11px] text-slate-500 pl-6.5">
+                Date of Q88 must not more than specified days from Vessel Nomination Date
+              </p>
+              <div class="pl-6.5 flex items-center gap-2 bg-slate-50 p-2 rounded-lg border border-slate-200 text-xs">
+                <span class="text-slate-600">อายุเอกสาร Q88 ไม่เกิน:</span>
+                <input type="number" id="cfg-q88-days" value="14" min="1" max="365" class="port-cfg-input w-20 px-2.5 py-1 rounded border border-blue-300 bg-white font-mono font-bold text-blue-700 text-center" />
+                <span class="text-slate-700 font-semibold">วัน (Days)</span>
+                <span class="text-[10px] text-slate-400 font-mono ml-auto">(Nomination Date - Q88 Date ≤ X Days)</span>
+              </div>
+            </div>
+
+            <!-- 2) P&I Insurance Expiry -->
+            <div class="bg-white p-3 rounded-xl border border-blue-200 bg-blue-50/10 space-y-2 transition">
+              <div class="flex items-start justify-between">
+                <label class="flex items-center gap-2.5 cursor-pointer font-bold text-blue-900 text-xs">
+                  <input type="checkbox" id="chk-logic-pi" checked class="port-cfg-input rounded text-blue-600 w-4 h-4" />
+                  <span>P&I (วันหมดอายุประกันภัย P&I Club)</span>
+                </label>
+                <span class="text-[10px] text-blue-600 font-mono font-semibold bg-blue-50 px-2 py-0.5 rounded">Logic 2</span>
+              </div>
+              <p class="text-[11px] text-slate-500 pl-6.5">
+                Insurance Expiry Date ≥ (Last Day of Discharge Date Range + Specified Days)
+              </p>
+              <div class="pl-6.5 flex items-center gap-2 bg-blue-50/70 p-2 rounded-lg border border-blue-200 text-xs">
+                <span class="text-blue-900 font-medium">ขยายระยะเวลาคุ้มครองหลังสิ้นสุดวันขนถ่าย:</span>
+                <input type="number" id="cfg-pi-days" value="7" min="0" max="60" class="port-cfg-input w-20 px-2.5 py-1 rounded border border-blue-400 bg-white font-mono font-bold text-blue-700 text-center" />
+                <span class="text-blue-900 font-semibold">วัน (Days)</span>
+                <span class="text-[10px] text-blue-600 font-mono ml-auto">Expiry ≥ Last Discharge Day + X Days</span>
+              </div>
+            </div>
+
+            <!-- 3) H&M Insurance Expiry -->
+            <div class="bg-white p-3 rounded-xl border border-blue-200 bg-blue-50/10 space-y-2 transition">
+              <div class="flex items-start justify-between">
+                <label class="flex items-center gap-2.5 cursor-pointer font-bold text-blue-900 text-xs">
+                  <input type="checkbox" id="chk-logic-hm" checked class="port-cfg-input rounded text-blue-600 w-4 h-4" />
+                  <span>H&M (วันหมดอายุประกันภัยตัวเรือ Hull & Machinery)</span>
+                </label>
+                <span class="text-[10px] text-blue-600 font-mono font-semibold bg-blue-50 px-2 py-0.5 rounded">Logic 3</span>
+              </div>
+              <p class="text-[11px] text-slate-500 pl-6.5">
+                Insurance Expiry Date ≥ (Last Day of Discharge Date Range + Specified Days)
+              </p>
+              <div class="pl-6.5 flex items-center gap-2 bg-blue-50/70 p-2 rounded-lg border border-blue-200 text-xs">
+                <span class="text-blue-900 font-medium">ขยายระยะเวลาคุ้มครองหลังสิ้นสุดวันขนถ่าย:</span>
+                <input type="number" id="cfg-hm-days" value="7" min="0" max="60" class="port-cfg-input w-20 px-2.5 py-1 rounded border border-blue-400 bg-white font-mono font-bold text-blue-700 text-center" />
+                <span class="text-blue-900 font-semibold">วัน (Days)</span>
+                <span class="text-[10px] text-blue-600 font-mono ml-auto">Expiry ≥ Last Discharge Day + X Days</span>
+              </div>
+            </div>
+
+            <!-- 4) Next Dry Dock Due -->
+            <div class="bg-white p-3 rounded-xl border border-slate-200 hover:border-slate-300 space-y-2 transition">
+              <div class="flex items-start justify-between">
+                <label class="flex items-center gap-2.5 cursor-pointer font-bold text-slate-800 text-xs">
+                  <input type="checkbox" id="chk-logic-next-drydock" checked class="port-cfg-input rounded text-blue-600 w-4 h-4" />
+                  <span>Next Dry Dock (กำหนดวันเข้าอู่แห้งรอบถัดไป)</span>
+                </label>
+                <span class="text-[10px] text-slate-500 font-mono font-semibold bg-slate-100 px-2 py-0.5 rounded">Logic 4</span>
+              </div>
+              <p class="text-[11px] text-slate-500 pl-6.5">
+                Next dry dock due ≥ Last Day of Discharge Date Range + Specified calendar month
+              </p>
+              <div class="pl-6.5 flex items-center gap-2 bg-slate-50 p-2 rounded-lg border border-slate-200 text-xs">
+                <span class="text-slate-600">กำหนดอายุการเข้าอู่แห้งล่วงหน้า:</span>
+                <input type="number" id="cfg-next-drydock-months" value="1" min="1" max="12" class="port-cfg-input w-20 px-2.5 py-1 rounded border border-slate-300 bg-white font-mono font-bold text-slate-800 text-center" />
+                <span class="text-slate-700 font-semibold">เดือนตามปฏิทิน (Calendar Month)</span>
+                <span class="text-[10px] text-slate-400 font-mono ml-auto">Next Due ≥ Last Discharge Day + X Month</span>
+              </div>
+            </div>
+
+            <!-- 5) Next Annual Survey Due -->
+            <div class="bg-white p-3 rounded-xl border border-slate-200 hover:border-slate-300 space-y-2 transition">
+              <div class="flex items-start justify-between">
+                <label class="flex items-center gap-2.5 cursor-pointer font-bold text-slate-800 text-xs">
+                  <input type="checkbox" id="chk-logic-annual-survey" checked class="port-cfg-input rounded text-blue-600 w-4 h-4" />
+                  <span>Next Annual Survey Due (รอบตรวจสภาพเรือประจำปีถัดไป)</span>
+                </label>
+                <span class="text-[10px] text-slate-500 font-mono font-semibold bg-slate-100 px-2 py-0.5 rounded">Logic 5</span>
+              </div>
+              <p class="text-[11px] text-slate-500 pl-6.5">
+                Next Annual survey due > Last Day of Laycan + Specified Days
+              </p>
+              <div class="pl-6.5 flex items-center gap-2 bg-slate-50 p-2 rounded-lg border border-slate-200 text-xs">
+                <span class="text-slate-600">กำหนดระยะเวลาอายุการตรวจสภาพเรือ:</span>
+                <input type="number" id="cfg-annual-survey-days" value="7" min="0" max="60" class="port-cfg-input w-20 px-2.5 py-1 rounded border border-slate-300 bg-white font-mono font-bold text-slate-800 text-center" />
+                <span class="text-slate-700 font-semibold">วัน (Days)</span>
+                <span class="text-[10px] text-slate-400 font-mono ml-auto">Annual Survey > Laycan Last Day + X Days</span>
+              </div>
+            </div>
+
+            <!-- 6) Date of Last Dry Dock vs SIRE -->
+            <div class="bg-white p-3 rounded-xl border border-slate-200 hover:border-slate-300 space-y-2 transition">
+              <div class="flex items-start justify-between">
+                <label class="flex items-center gap-2.5 cursor-pointer font-bold text-slate-800 text-xs">
+                  <input type="checkbox" id="chk-logic-drydock-sire" checked class="port-cfg-input rounded text-blue-600 w-4 h-4" />
+                  <span>Date of Last Dry Dock (ลำดับวันเข้าอู่แห้งเทียบกับการตรวจ SIRE)</span>
+                </label>
+                <span class="text-[10px] text-slate-500 font-mono font-semibold bg-slate-100 px-2 py-0.5 rounded">Logic 6</span>
+              </div>
+              <p class="text-[11px] text-slate-500 pl-6.5">
+                Date of last Dry dock + X days < Date of last SIRE Inspection + Y days
+              </p>
+              <div class="pl-6.5 flex items-center gap-2 bg-slate-50 p-2 rounded-lg border border-slate-200 text-xs flex-wrap">
+                <span class="text-slate-600">Last Dry dock +</span>
+                <input type="number" id="cfg-drydock-offset-days" value="0" min="0" max="30" class="port-cfg-input w-16 px-2 py-1 rounded border border-slate-300 bg-white font-mono font-bold text-slate-800 text-center" />
+                <span class="text-slate-600">วัน &lt; Last SIRE +</span>
+                <input type="number" id="cfg-sire-offset-days" value="0" min="0" max="30" class="port-cfg-input w-16 px-2 py-1 rounded border border-slate-300 bg-white font-mono font-bold text-slate-800 text-center" />
+                <span class="text-slate-700 font-semibold">วัน</span>
+                <span class="text-[10px] text-slate-400 font-mono ml-auto">Last Dry dock + X &lt; Last SIRE + Y</span>
+              </div>
+            </div>
+
+            <!-- 7) Date of Last Dry Dock (Min 3 Voyages after Dry Dock) -->
+            <div class="bg-white p-3 rounded-xl border border-slate-200 hover:border-slate-300 space-y-2 transition">
+              <div class="flex items-start justify-between">
+                <label class="flex items-center gap-2.5 cursor-pointer font-bold text-slate-800 text-xs">
+                  <input type="checkbox" id="chk-logic-drydock-min3voy" checked class="port-cfg-input rounded text-blue-600 w-4 h-4" />
+                  <span>Date of Last Dry Dock (Vessel must have min 3 voy after dry dock)</span>
+                </label>
+                <span class="text-[10px] text-slate-500 font-mono font-semibold bg-slate-100 px-2 py-0.5 rounded">Logic 7</span>
+              </div>
+              <p class="text-[11px] text-slate-500 pl-6.5">
+                Last Day of Laycan - Last Dry Dock Date > Specified Days (e.g. 7 * 3 Days)
+              </p>
+              <div class="pl-6.5 flex items-center gap-2 bg-slate-50 p-2 rounded-lg border border-slate-200 text-xs">
+                <span class="text-slate-600">ระยะเวลาขั้นต่ำหลังออกจากอู่แห้ง:</span>
+                <input type="number" id="cfg-drydock-min3voy-days" value="21" min="1" max="90" class="port-cfg-input w-20 px-2.5 py-1 rounded border border-slate-300 bg-white font-mono font-bold text-slate-800 text-center" />
+                <span class="text-slate-700 font-semibold">วัน (3 Voyages × 7 Days)</span>
+                <span class="text-[10px] text-slate-400 font-mono ml-auto">Last Laycan - Last Dry Dock &gt; X Days</span>
+              </div>
+            </div>
+
+            <!-- 8) Next Dry Dock Due (Vessel needs min 1 voy before dry-dock) -->
+            <div class="bg-white p-3 rounded-xl border border-slate-200 hover:border-slate-300 space-y-2 transition">
+              <div class="flex items-start justify-between">
+                <label class="flex items-center gap-2.5 cursor-pointer font-bold text-slate-800 text-xs">
+                  <input type="checkbox" id="chk-logic-nextdrydock-min1voy" checked class="port-cfg-input rounded text-blue-600 w-4 h-4" />
+                  <span>Next Dry Dock Due (Vessel needs min 1 voy before dry-dock)</span>
+                </label>
+                <span class="text-[10px] text-slate-500 font-mono font-semibold bg-slate-100 px-2 py-0.5 rounded">Logic 8</span>
+              </div>
+              <p class="text-[11px] text-slate-500 pl-6.5">
+                Next dry dock due - Last Day of Laycan > Specified Days
+              </p>
+              <div class="pl-6.5 flex items-center gap-2 bg-slate-50 p-2 rounded-lg border border-slate-200 text-xs">
+                <span class="text-slate-600">ระยะเวลาเผื่อก่อนเข้าอู่แห้งรอบถัดไป:</span>
+                <input type="number" id="cfg-nextdrydock-min1voy-days" value="15" min="1" max="60" class="port-cfg-input w-20 px-2.5 py-1 rounded border border-slate-300 bg-white font-mono font-bold text-slate-800 text-center" />
+                <span class="text-slate-700 font-semibold">วัน (Min 1 Voyage)</span>
+                <span class="text-[10px] text-slate-400 font-mono ml-auto">Next Dry Dock - Last Laycan &gt; X Days</span>
+              </div>
+            </div>
+
+            <!-- 9) Date of Last SIRE Inspection -->
+            <div class="bg-white p-3 rounded-xl border border-slate-200 hover:border-slate-300 space-y-2 transition">
+              <div class="flex items-start justify-between">
+                <label class="flex items-center gap-2.5 cursor-pointer font-bold text-slate-800 text-xs">
+                  <input type="checkbox" id="chk-logic-sire-window" checked class="port-cfg-input rounded text-blue-600 w-4 h-4" />
+                  <span>Date of Last SIRE Inspection (อายุการตรวจเรือตามรายงาน SIRE)</span>
+                </label>
+                <span class="text-[10px] text-slate-500 font-mono font-semibold bg-slate-100 px-2 py-0.5 rounded">Logic 9</span>
+              </div>
+              <p class="text-[11px] text-slate-500 pl-6.5">
+                Date of last SIRE Inspection + Specified Months ≥ Laycan End / Discharge Date
+              </p>
+              <div class="pl-6.5 flex items-center gap-2 bg-slate-50 p-2 rounded-lg border border-slate-200 text-xs">
+                <span class="text-slate-600">อายุรายงาน SIRE ไม่เกิน:</span>
+                <input type="number" id="cfg-sire-valid-months" value="6" min="1" max="12" class="port-cfg-input w-20 px-2.5 py-1 rounded border border-slate-300 bg-white font-mono font-bold text-slate-800 text-center" />
+                <span class="text-slate-700 font-semibold">เดือน (Months)</span>
+                <span class="text-[10px] text-slate-400 font-mono ml-auto">Last SIRE Date + X Months ≥ Laycan</span>
+              </div>
+            </div>
+
+            <!-- 10) Date(s) of Name Change -->
+            <div class="bg-white p-3 rounded-xl border border-slate-200 hover:border-slate-300 space-y-2 transition">
+              <div class="flex items-start justify-between">
+                <label class="flex items-center gap-2.5 cursor-pointer font-bold text-slate-800 text-xs">
+                  <input type="checkbox" id="chk-logic-namechange" checked class="port-cfg-input rounded text-blue-600 w-4 h-4" />
+                  <span>Date(s) of Name Change (ประวัติการเปลี่ยนชื่อเรือ)</span>
+                </label>
+                <span class="text-[10px] text-slate-500 font-mono font-semibold bg-slate-100 px-2 py-0.5 rounded">Logic 10</span>
+              </div>
+              <p class="text-[11px] text-slate-500 pl-6.5">
+                Last Day of Laycan - Date of name change > Specified Days and Date of last SIRE > Date of name change
+              </p>
+              <div class="pl-6.5 flex items-center gap-2 bg-slate-50 p-2 rounded-lg border border-slate-200 text-xs">
+                <span class="text-slate-600">ระยะเวลาหลังการเปลี่ยนชื่อเรือ:</span>
+                <input type="number" id="cfg-namechange-days" value="90" min="1" max="365" class="port-cfg-input w-20 px-2.5 py-1 rounded border border-slate-300 bg-white font-mono font-bold text-slate-800 text-center" />
+                <span class="text-slate-700 font-semibold">วัน (30 × 3 Days)</span>
+                <span class="text-[10px] text-slate-400 font-mono ml-auto">Laycan - Name Change &gt; X Days &amp; SIRE &gt; Name Change</span>
+              </div>
+            </div>
+
+            <!-- 11) Certificate Expiry Date -->
+            <div class="bg-white p-3 rounded-xl border border-slate-200 hover:border-slate-300 space-y-2 transition">
+              <div class="flex items-start justify-between">
+                <label class="flex items-center gap-2.5 cursor-pointer font-bold text-slate-800 text-xs">
+                  <input type="checkbox" id="chk-logic-cert-expiry" checked class="port-cfg-input rounded text-blue-600 w-4 h-4" />
+                  <span>Certificate Expiry Date (วันหมดอายุใบรับรองเรือ)</span>
+                </label>
+                <span class="text-[10px] text-blue-600 font-mono font-semibold bg-blue-50 px-2 py-0.5 rounded">Logic 11</span>
+              </div>
+              <p class="text-[11px] text-slate-500 pl-6.5">
+                Certificate Expiry Date + Specified Days ≥ Last Day of Discharge Date Range
+              </p>
+              <div class="pl-6.5 flex items-center gap-2 bg-slate-50 p-2 rounded-lg border border-slate-200 text-xs">
+                <span class="text-slate-600">ขยายระยะเวลาคุ้มครองใบรับรอง:</span>
+                <input type="number" id="cfg-cert-days" value="0" min="0" max="60" class="port-cfg-input w-20 px-2.5 py-1 rounded border border-slate-300 bg-white font-mono font-bold text-slate-800 text-center" />
+                <span class="text-slate-700 font-semibold">วัน (Days)</span>
+                <span class="text-[10px] text-slate-400 font-mono ml-auto">Cert Expiry + X Days ≥ Last Discharge Day</span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Change Reason (Mandatory for Audit Trail) -->
+        <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-1.5">
+          <label class="block font-bold text-slate-800 text-xs flex items-center gap-1.5">
+            <i class="fa-solid fa-pen-to-square text-blue-600"></i>
+            เหตุผลในการปรับปรุง Logic / ระยะเวลา (Change Justification) *
+          </label>
+          <input type="text" id="cfg-change-reason" placeholder="ระบุเหตุผลในการแก้ไข เช่น ปรับเกณฑ์ P&I Expiry + 7 วันตามมาตรฐาน GC หรือปรับลดเกณฑ์วันอายุ Q88..." class="port-cfg-input w-full border border-slate-300 rounded-lg px-3 py-2 bg-white text-xs focus:ring-1 focus:ring-blue-500" />
+        </div>
+
+        <!-- AUDIT LOG TRAIL SECTION -->
+        <div class="space-y-2 border-t border-slate-200 pt-3">
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-slate-900 text-xs flex items-center gap-1.5">
+              <i class="fa-solid fa-clock-rotate-left text-amber-600"></i>
+              ประวัติการแก้ไขเกณฑ์ Logic (Criteria Audit Trail & Change Logs)
+            </span>
+            <span class="text-[10px] text-slate-400" id="modal-audit-count">3 บันทึกประวัติ</span>
+          </div>
+
+          <div class="overflow-x-auto rounded-xl border border-slate-200 bg-white max-h-48 overflow-y-auto">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-50 text-slate-600 font-semibold border-b border-slate-200 sticky top-0">
+                <tr>
+                  <th class="px-3 py-2">วันที่-เวลา</th>
+                  <th class="px-3 py-2">เกณฑ์ Logic ที่แก้ไข</th>
+                  <th class="px-3 py-2">การเปลี่ยนแปลงระยะเวลา / เกณฑ์</th>
+                  <th class="px-3 py-2">ผู้แก้ไข (Modified By)</th>
+                  <th class="px-3 py-2">เหตุผล</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 font-normal" id="modal-audit-tbody">
+                <!-- Populated dynamically based on selected port -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="flex justify-end gap-2 pt-2 border-t border-slate-200">
+          <button type="button" onclick="closeCreatePortModal()" class="px-4 py-2 border rounded-xl font-semibold text-slate-700 hover:bg-slate-50 transition">ปิดหน้าต่าง</button>
+          <button type="submit" id="btn-save-port-criteria" class="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-bold px-5 py-2 rounded-xl shadow-md transition flex items-center gap-2">
+            <i class="fa-solid fa-floppy-disk"></i>
+            <span>บันทึกการแก้ไข Logic และบันทึก Audit Log</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast Notification System (Replaces alert) -->
+  <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+  <!-- ================= APPLICATION JAVASCRIPT LOGIC ================= -->
+  <script>
+    // Global Application State (Based on Requirement Summary Excel)
+    const AppData = {
+      currentUser: {
+        id: 'usr-01',
+        name: 'Somchai Prasert',
+        email: 'somchai.p@pttgcgroup.com',
+        upn: 'somchai.p@pttgcgroup.com',
+        bu: 'Crude',
+        role: 'Super Admin',
+        ruleProfile: 'GC Offshore (Laycan + 7 Days)'
+      },
+
+      // User Directory Repository (Admin Screen 1)
+      users: [
+        { id: 'usr-01', name: 'Somchai Prasert', email: 'somchai.p@pttgcgroup.com', upn: 'somchai.p@pttgcgroup.com', bu: 'Crude', role: 'Super Admin', status: 'Active' },
+        { id: 'usr-02', name: 'Kanya Ruangjit', email: 'kanya.r@irpc.co.th', upn: 'kanya.r@irpc.co.th', bu: 'PetChem', role: 'Requester', status: 'Active' },
+        { id: 'usr-03', name: 'Anan Sombat', email: 'anan.s@thaioilgroup.com', upn: 'anan.s@thaioilgroup.com', bu: 'Product', role: 'Admin', status: 'Active' },
+        { id: 'usr-04', name: 'Prapat P.', email: 'prapat.p@ptttank.com', upn: 'prapat.p@ptttank.com', bu: 'Chartering', role: 'Requester', status: 'Active' },
+        { id: 'usr-05', name: 'Wichai Thongdee (Pending)', email: 'wichai.t@ptt.co.th', upn: 'wichai.t@ptt.co.th', bu: 'Crude', role: 'Requester', status: 'Pending' }
+      ],
+
+      // Audit Log Repository for Logic & Criteria Modifications (Clean Logic Names)
+      auditLogs: [
+        {
+          id: 'AUD-001',
+          portId: 7,
+          portName: 'GC SPM (Offshore)',
+          timestamp: '01/09/2026 14:30',
+          rule: 'P&I Insurance Expiry',
+          changeDetail: 'ปรับระยะเวลาคุ้มครอง: Laycan End + 5 วัน ➔ Laycan End + 7 วัน',
+          modifiedBy: 'Somchai Prasert (Crude Super Admin)',
+          reason: 'ปรับตามระเบียบความปลอดภัย SPM ประจำปี 2026 (Safety Criteria v2.4)'
+        },
+        {
+          id: 'AUD-002',
+          portId: 7,
+          portName: 'GC SPM (Offshore)',
+          timestamp: '15/08/2026 09:15',
+          rule: 'Next Dry Dock Due',
+          changeDetail: 'ปรับเกณฑ์รอบเข้าอู่แห้ง: Laycan End + 15 วัน',
+          modifiedBy: 'Somchai Prasert (Crude Super Admin)',
+          reason: 'ข้อบังคับทุ่นจอดเรือกลางทะเลเพื่อความปลอดภัยสูงสุด'
+        },
+        {
+          id: 'AUD-003',
+          portId: 1,
+          portName: 'IRPC Rayong Terminal',
+          timestamp: '10/08/2026 11:00',
+          rule: 'Q88 Issue Date Validity',
+          changeDetail: 'กำหนดเกณฑ์อายุเอกสาร: ≤ 14 วันนับจากวัน Nomination',
+          modifiedBy: 'Anan Sombat (Product Admin)',
+          reason: 'Standard PTT Group Safety Policy'
+        }
+      ],
+
+      // Terminals Master List with full 11 Logic Configurations
+      terminals: [
+        { id: 1, bu: 'IRPC', mapName: 'IRPC Rayong Terminal', displayName: 'IRPC Rayong Terminal', q88Days: 14, isQ88: true, piDays: 7, isPi: true, hmDays: 7, isHm: true, nextDrydockMonths: 1, isNextDrydock: true, annualSurveyDays: 7, isAnnualSurvey: true, drydockOffsetDays: 0, sireOffsetDays: 0, isDrydockSire: true, drydock3VoyDays: 21, isDrydock3Voy: true, nextDrydock1VoyDays: 15, isNextDrydock1Voy: true, sireWindowMonths: 6, isSireWindow: true, namechangeDays: 90, isNamechange: true, certDays: 0, isCertExpiry: true },
+        { id: 2, bu: 'IRPC', mapName: 'IRPC Phrapradaeng Terminal', displayName: 'IRPC Phrapradaeng Terminal', q88Days: 14, isQ88: true, piDays: 7, isPi: true, hmDays: 7, isHm: true, nextDrydockMonths: 1, isNextDrydock: true, annualSurveyDays: 7, isAnnualSurvey: true, drydockOffsetDays: 0, sireOffsetDays: 0, isDrydockSire: true, drydock3VoyDays: 21, isDrydock3Voy: true, nextDrydock1VoyDays: 15, isNextDrydock1Voy: true, sireWindowMonths: 6, isSireWindow: true, namechangeDays: 90, isNamechange: true, certDays: 0, isCertExpiry: true },
+        { id: 3, bu: 'IRPC', mapName: 'IRPC Maeklong Terminal', displayName: 'IRPC Maeklong Terminal', q88Days: 14, isQ88: true, piDays: 7, isPi: true, hmDays: 7, isHm: true, nextDrydockMonths: 1, isNextDrydock: true, annualSurveyDays: 7, isAnnualSurvey: true, drydockOffsetDays: 0, sireOffsetDays: 0, isDrydockSire: true, drydock3VoyDays: 21, isDrydock3Voy: true, nextDrydock1VoyDays: 15, isNextDrydock1Voy: true, sireWindowMonths: 6, isSireWindow: true, namechangeDays: 90, isNamechange: true, certDays: 0, isCertExpiry: true },
+        { id: 4, bu: 'IRPC', mapName: 'IRPC Chumphon Terminal', displayName: 'IRPC Chumphon Terminal', q88Days: 14, isQ88: true, piDays: 7, isPi: true, hmDays: 7, isHm: true, nextDrydockMonths: 1, isNextDrydock: true, annualSurveyDays: 7, isAnnualSurvey: true, drydockOffsetDays: 0, sireOffsetDays: 0, isDrydockSire: true, drydock3VoyDays: 21, isDrydock3Voy: true, nextDrydock1VoyDays: 15, isNextDrydock1Voy: true, sireWindowMonths: 6, isSireWindow: true, namechangeDays: 90, isNamechange: true, certDays: 0, isCertExpiry: true },
+        { id: 5, bu: 'GC', mapName: 'GC West Terminal', displayName: 'GC West Terminal', q88Days: 14, isQ88: true, piDays: 7, isPi: true, hmDays: 7, isHm: true, nextDrydockMonths: 1, isNextDrydock: true, annualSurveyDays: 7, isAnnualSurvey: true, drydockOffsetDays: 0, sireOffsetDays: 0, isDrydockSire: true, drydock3VoyDays: 21, isDrydock3Voy: true, nextDrydock1VoyDays: 15, isNextDrydock1Voy: true, sireWindowMonths: 6, isSireWindow: true, namechangeDays: 90, isNamechange: true, certDays: 0, isCertExpiry: true },
+        { id: 6, bu: 'GC', mapName: 'GC East Terminal', displayName: 'GC East Terminal', q88Days: 14, isQ88: true, piDays: 7, isPi: true, hmDays: 7, isHm: true, nextDrydockMonths: 1, isNextDrydock: true, annualSurveyDays: 7, isAnnualSurvey: true, drydockOffsetDays: 0, sireOffsetDays: 0, isDrydockSire: true, drydock3VoyDays: 21, isDrydock3Voy: true, nextDrydock1VoyDays: 15, isNextDrydock1Voy: true, sireWindowMonths: 6, isSireWindow: true, namechangeDays: 90, isNamechange: true, certDays: 0, isCertExpiry: true },
+        { id: 7, bu: 'GC', mapName: 'GC SPM', displayName: 'GC SPM (Offshore)', q88Days: 14, isQ88: true, piDays: 7, isPi: true, hmDays: 7, isHm: true, nextDrydockMonths: 1, isNextDrydock: true, annualSurveyDays: 7, isAnnualSurvey: true, drydockOffsetDays: 0, sireOffsetDays: 0, isDrydockSire: true, drydock3VoyDays: 21, isDrydock3Voy: true, nextDrydock1VoyDays: 15, isNextDrydock1Voy: true, sireWindowMonths: 6, isSireWindow: true, namechangeDays: 90, isNamechange: true, certDays: 0, isCertExpiry: true },
+        { id: 8, bu: 'GC', mapName: 'GC (Thai Tank) Terminal', displayName: 'GC (Thai Tank) Terminal', q88Days: 14, isQ88: true, piDays: 7, isPi: true, hmDays: 7, isHm: true, nextDrydockMonths: 1, isNextDrydock: true, annualSurveyDays: 7, isAnnualSurvey: true, drydockOffsetDays: 0, sireOffsetDays: 0, isDrydockSire: true, drydock3VoyDays: 21, isDrydock3Voy: true, nextDrydock1VoyDays: 15, isNextDrydock1Voy: true, sireWindowMonths: 6, isSireWindow: true, namechangeDays: 90, isNamechange: true, certDays: 0, isCertExpiry: true },
+        { id: 9, bu: 'TOP', mapName: 'TOP In-Shore Terminal', displayName: 'TOP In-Shore Terminal', q88Days: 14, isQ88: true, piDays: 7, isPi: true, hmDays: 7, isHm: true, nextDrydockMonths: 1, isNextDrydock: true, annualSurveyDays: 7, isAnnualSurvey: true, drydockOffsetDays: 0, sireOffsetDays: 0, isDrydockSire: true, drydock3VoyDays: 21, isDrydock3Voy: true, nextDrydock1VoyDays: 15, isNextDrydock1Voy: true, sireWindowMonths: 6, isSireWindow: true, namechangeDays: 90, isNamechange: true, certDays: 0, isCertExpiry: true },
+        { id: 10, bu: 'TOP', mapName: 'TOP CBM', displayName: 'TOP CBM', q88Days: 14, isQ88: true, piDays: 7, isPi: true, hmDays: 7, isHm: true, nextDrydockMonths: 1, isNextDrydock: true, annualSurveyDays: 7, isAnnualSurvey: true, drydockOffsetDays: 0, sireOffsetDays: 0, isDrydockSire: true, drydock3VoyDays: 21, isDrydock3Voy: true, nextDrydock1VoyDays: 15, isNextDrydock1Voy: true, sireWindowMonths: 6, isSireWindow: true, namechangeDays: 90, isNamechange: true, certDays: 0, isCertExpiry: true },
+        { id: 11, bu: 'TOP', mapName: 'TOP SPM 1', displayName: 'TOP SPM 1', q88Days: 14, isQ88: true, piDays: 7, isPi: true, hmDays: 7, isHm: true, nextDrydockMonths: 1, isNextDrydock: true, annualSurveyDays: 7, isAnnualSurvey: true, drydockOffsetDays: 0, sireOffsetDays: 0, isDrydockSire: true, drydock3VoyDays: 21, isDrydock3Voy: true, nextDrydock1VoyDays: 15, isNextDrydock1Voy: true, sireWindowMonths: 6, isSireWindow: true, namechangeDays: 90, isNamechange: true, certDays: 0, isCertExpiry: true },
+        { id: 12, bu: 'TOP', mapName: 'TOP SPM 2', displayName: 'TOP SPM 2', q88Days: 14, isQ88: true, piDays: 7, isPi: true, hmDays: 7, isHm: true, nextDrydockMonths: 1, isNextDrydock: true, annualSurveyDays: 7, isAnnualSurvey: true, drydockOffsetDays: 0, sireOffsetDays: 0, isDrydockSire: true, drydock3VoyDays: 21, isDrydock3Voy: true, nextDrydock1VoyDays: 15, isNextDrydock1Voy: true, sireWindowMonths: 6, isSireWindow: true, namechangeDays: 90, isNamechange: true, certDays: 0, isCertExpiry: true },
+        { id: 13, bu: 'PTTTANK', mapName: 'PTT Tank Terminal', displayName: 'PTT Tank Terminal', q88Days: 14, isQ88: true, piDays: 7, isPi: true, hmDays: 7, isHm: true, nextDrydockMonths: 1, isNextDrydock: true, annualSurveyDays: 7, isAnnualSurvey: true, drydockOffsetDays: 0, sireOffsetDays: 0, isDrydockSire: true, drydock3VoyDays: 21, isDrydock3Voy: true, nextDrydock1VoyDays: 15, isNextDrydock1Voy: true, sireWindowMonths: 6, isSireWindow: true, namechangeDays: 90, isNamechange: true, certDays: 0, isCertExpiry: true },
+        { id: 14, bu: 'OR', mapName: 'OR Bangkok Terminal', displayName: 'OR Bangkok Terminal', q88Days: 14, isQ88: true, piDays: 7, isPi: true, hmDays: 7, isHm: true, nextDrydockMonths: 1, isNextDrydock: true, annualSurveyDays: 7, isAnnualSurvey: true, drydockOffsetDays: 0, sireOffsetDays: 0, isDrydockSire: true, drydock3VoyDays: 21, isDrydock3Voy: true, nextDrydock1VoyDays: 15, isNextDrydock1Voy: true, sireWindowMonths: 6, isSireWindow: true, namechangeDays: 90, isNamechange: true, certDays: 0, isCertExpiry: true },
+        { id: 15, bu: 'OR', mapName: 'PTT(OR) Sriracha Terminal', displayName: 'PTT(OR) Sriracha Terminal', q88Days: 14, isQ88: true, piDays: 7, isPi: true, hmDays: 7, isHm: true, nextDrydockMonths: 1, isNextDrydock: true, annualSurveyDays: 7, isAnnualSurvey: true, drydockOffsetDays: 0, sireOffsetDays: 0, isDrydockSire: true, drydock3VoyDays: 21, isDrydock3Voy: true, nextDrydock1VoyDays: 15, isNextDrydock1Voy: true, sireWindowMonths: 6, isSireWindow: true, namechangeDays: 90, isNamechange: true, certDays: 0, isCertExpiry: true },
+        { id: 16, bu: 'OR', mapName: 'OR Bandon Terminal', displayName: 'OR Bandon Terminal', q88Days: 14, isQ88: true, piDays: 7, isPi: true, hmDays: 7, isHm: true, nextDrydockMonths: 1, isNextDrydock: true, annualSurveyDays: 7, isAnnualSurvey: true, drydockOffsetDays: 0, sireOffsetDays: 0, isDrydockSire: true, drydock3VoyDays: 21, isDrydock3Voy: true, nextDrydock1VoyDays: 15, isNextDrydock1Voy: true, sireWindowMonths: 6, isSireWindow: true, namechangeDays: 90, isNamechange: true, certDays: 0, isCertExpiry: true },
+        { id: 17, bu: 'OR', mapName: 'OR Songkhla Terminal', displayName: 'OR Songkhla Terminal', q88Days: 14, isQ88: true, piDays: 7, isPi: true, hmDays: 7, isHm: true, nextDrydockMonths: 1, isNextDrydock: true, annualSurveyDays: 7, isAnnualSurvey: true, drydockOffsetDays: 0, sireOffsetDays: 0, isDrydockSire: true, drydock3VoyDays: 21, isDrydock3Voy: true, nextDrydock1VoyDays: 15, isNextDrydock1Voy: true, sireWindowMonths: 6, isSireWindow: true, namechangeDays: 90, isNamechange: true, certDays: 0, isCertExpiry: true },
+        { id: 18, bu: 'OR', mapName: 'OR Phuket Terminal', displayName: 'OR Phuket Terminal', q88Days: 14, isQ88: true, piDays: 7, isPi: true, hmDays: 7, isHm: true, nextDrydockMonths: 1, isNextDrydock: true, annualSurveyDays: 7, isAnnualSurvey: true, drydockOffsetDays: 0, sireOffsetDays: 0, isDrydockSire: true, drydock3VoyDays: 21, isDrydock3Voy: true, nextDrydock1VoyDays: 15, isNextDrydock1Voy: true, sireWindowMonths: 6, isSireWindow: true, namechangeDays: 90, isNamechange: true, certDays: 0, isCertExpiry: true },
+        { id: 19, bu: 'OR', mapName: 'PTT(OR) Khaoboya Terminal', displayName: 'PTT(OR) Khaoboya Terminal', q88Days: 14, isQ88: true, piDays: 7, isPi: true, hmDays: 7, isHm: true, nextDrydockMonths: 1, isNextDrydock: true, annualSurveyDays: 7, isAnnualSurvey: true, drydockOffsetDays: 0, sireOffsetDays: 0, isDrydockSire: true, drydock3VoyDays: 21, isDrydock3Voy: true, nextDrydock1VoyDays: 15, isNextDrydock1Voy: true, sireWindowMonths: 6, isSireWindow: true, namechangeDays: 90, isNamechange: true, certDays: 0, isCertExpiry: true }
+      ],
+
+      // Requests History Log (Only PASS or FAIL Status, BU = Requester Team)
+      requests: [
+        {
+          id: 'REQ-20260901-01',
+          requestDate: '01/09/2026',
+          vesselName: 'MT ATLANTIC EXPLORER',
+          imo: '9397212',
+          bu: 'Crude',
+          terminal: 'GC SPM',
+          product: 'Petroleum',
+          laycanRange: '10/09/2026 - 15/09/2026',
+          status: 'FAIL',
+          issuesCount: 2,
+          submittedAt: '01/09/2026 09:30',
+          decision: 'REJECT'
+        },
+        {
+          id: 'REQ-20260828-04',
+          requestDate: '28/08/2026',
+          vesselName: 'MT PATARAVARIN',
+          imo: '9214532',
+          bu: 'PetChem',
+          terminal: 'IRPC Rayong Terminal',
+          product: 'Petroleum',
+          laycanRange: '02/09/2026 - 06/09/2026',
+          status: 'PASS',
+          issuesCount: 0,
+          submittedAt: '28/08/2026 14:12',
+          decision: 'ACCEPT'
+        },
+        {
+          id: 'REQ-20260820-02',
+          requestDate: '20/08/2026',
+          vesselName: 'MT PACIFIC VOYAGER',
+          imo: '9456781',
+          bu: 'Product',
+          terminal: 'TOP CBM',
+          product: 'Crude Oil',
+          laycanRange: '12/09/2026 - 16/09/2026',
+          status: 'PASS',
+          issuesCount: 0,
+          submittedAt: '20/08/2026 11:05',
+          decision: 'ACCEPT'
+        },
+        {
+          id: 'REQ-20260815-03',
+          requestDate: '15/08/2026',
+          vesselName: 'MT OCEAN PRIDE',
+          imo: '9512345',
+          bu: 'Chartering',
+          terminal: 'OR Bangkok Terminal',
+          product: 'Clean Petroleum',
+          laycanRange: '18/08/2026 - 22/08/2026',
+          status: 'PASS',
+          issuesCount: 0,
+          submittedAt: '15/08/2026 10:20',
+          decision: 'ACCEPT'
+        }
+      ],
+
+      // Current active clearance review case (Atlantic Explorer Q88 actual data)
+      activeCase: {
+        nominationDate: '2026-09-01',
+        laycanStart: '2026-09-10',
+        laycanEnd: '2026-09-15',
+        dischargeLastDay: '2026-09-15',
+        bu: 'GC',
+        terminal: 'GC SPM',
+        vesselName: 'Atlantic Explorer',
+        imo: '9397212',
+        product: 'Petroleum',
+        // Extracted Q88 values
+        q88Date: '2024-07-05',
+        piExpiry: '2025-02-20',
+        hmExpiry: '2025-06-01',
+        mouldedDepth: 21.50,
+        draftSummer: 14.89,
+        freeboardSummer: 6.58,
+        distDeckToManifold: 1.90, // 8.22
+        nextDryDock: '2024-09-05',
+        // Orange fields (Manual terminal input)
+        draftMidship: 11.500,
+        terminalHeightLimit: 15.200,
+        shoreMinFlow: 1000,
+        shoreManifoldQty: 2,
+        shoreSizeInch: 8,
+        shoreSizeMm: 203
+      }
+    };
+
+    // Navigation Router
+    function navigate(screenId) {
+      document.querySelectorAll('.screen-view').forEach(s => s.classList.add('hidden'));
+      document.querySelectorAll('.nav-item').forEach(btn => {
+        btn.classList.remove('bg-slate-800/90', 'text-white', 'shadow-sm');
+        btn.classList.add('text-slate-400');
+      });
+
+      const target = document.getElementById('view-' + screenId);
+      if (target) target.classList.remove('hidden');
+
+      const navBtn = document.getElementById('nav-' + screenId);
+      if (navBtn) {
+        navBtn.classList.add('bg-slate-800/90', 'text-white', 'shadow-sm');
+        navBtn.classList.remove('text-slate-400');
+      }
+
+      if (screenId === 'admin-port') {
+        renderAdminPortTable();
+      } else if (screenId === 'admin-user') {
+        renderAdminUserTable();
+      } else if (screenId === 'dashboard') {
+        renderHistoryTable();
+      }
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // Toast Notification Maker (Replaces alert())
+    function showToast(message, type = 'success') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      
+      const colors = {
+        success: 'bg-emerald-800 border-emerald-600 text-white',
+        warn: 'bg-amber-800 border-amber-600 text-white',
+        error: 'bg-rose-800 border-rose-600 text-white',
+        info: 'bg-slate-800 border-slate-600 text-white'
+      };
+
+      const icons = {
+        success: 'fa-circle-check text-emerald-300',
+        warn: 'fa-triangle-exclamation text-amber-300',
+        error: 'fa-circle-xmark text-rose-300',
+        info: 'fa-circle-info text-cyan-300'
+      };
+
+      toast.className = `${colors[type] || colors.info} border px-4 py-3 rounded-xl shadow-xl flex items-center gap-3 text-xs pointer-events-auto transform transition duration-300 translate-y-2 opacity-0 font-sans z-50`;
+      toast.innerHTML = `
+        <i class="fa-solid ${icons[type] || icons.info} text-sm"></i>
+        <div class="flex-1 font-medium">${message}</div>
+      `;
+
+      container.appendChild(toast);
+      setTimeout(() => toast.classList.remove('translate-y-2', 'opacity-0'), 10);
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'translate-x-4');
+        setTimeout(() => toast.remove(), 300);
+      }, 3500);
+    }
+
+    // Dynamic Terminal Select based on BU
+    function populateTerminalDropdown(buValue) {
+      const select = document.getElementById('req-terminal');
+      if (!select) return;
+      select.innerHTML = '';
+      
+      const matched = AppData.terminals.filter(t => t.bu === buValue);
+      matched.forEach(term => {
+        const opt = document.createElement('option');
+        opt.value = term.displayName;
+        opt.textContent = term.displayName + (term.q23 ? ' [Requires Q23]' : '');
+        select.appendChild(opt);
+      });
+
+      renderDynamicDocsChecklist(buValue, matched[0]?.displayName || '');
+    }
+
+    function onBuChangeInCreateForm() {
+      const bu = document.getElementById('req-bu').value;
+      populateTerminalDropdown(bu);
+    }
+
+    function onTerminalChangeInCreateForm() {
+      const bu = document.getElementById('req-bu').value;
+      const term = document.getElementById('req-terminal').value;
+      renderDynamicDocsChecklist(bu, term);
+    }
+
+    // Dynamic Documents Checklist based on Required Doc. Sheet
+    function renderDynamicDocsChecklist(bu, terminal) {
+      const container = document.getElementById('dynamic-docs-list');
+      if (!container) return;
+      const isSpm = terminal.includes('SPM');
+      const isTop = bu === 'TOP';
+      const isGc = bu === 'GC';
+
+      let items = [
+        { name: 'Q88 Document (Form A/B)', desc: 'All BU Required (Word, .PDF)', req: true, color: 'border-blue-200 bg-blue-50/40 text-blue-900' },
+        { name: 'P&I Insurance Certificate', desc: 'Cover: 1,000,000,000 USD (.PDF)', req: true, color: 'border-slate-200 bg-white text-slate-800' },
+        { name: 'H&M Insurance Certificate', desc: 'Hull & Machinery Expiry Validation (.PDF)', req: true, color: 'border-slate-200 bg-white text-slate-800' }
+      ];
+
+      if (isSpm) {
+        items.push({ name: 'Q23 Questionnaire (SPM Specific)', desc: 'All BU Required for Terminal GC SPM (.PDF, .doc)', req: true, color: 'border-purple-300 bg-purple-50 text-purple-900 font-bold' });
+      }
+
+      if (isTop) {
+        items.push({ name: 'TOP Questionnaire', desc: 'Required for TOP / TPX (ต้องกรอกครบทุก Section)', req: true, color: 'border-cyan-300 bg-cyan-50 text-cyan-900 font-bold' });
+      }
+
+      if (isGc) {
+        items.push({ name: 'Form C (Table B)', desc: 'บังคับเฉพาะ Olefins Product (Gas Carrier) ท่าเรือ GC', req: false, color: 'border-slate-200 bg-slate-50 text-slate-600' });
+      }
+
+      items.push({ name: 'Stowage Plan (STOWPLAN)', desc: 'เป็นช่องให้อัปโหลดเฉยๆ ไม่ได้บังคับ กรณีเรือไม่ตรง Jetty Restriction', req: false, color: 'border-slate-200 bg-slate-50 text-slate-600' });
+
+      let html = '';
+      items.forEach((it, idx) => {
+        html += `
+          <div class="p-3 rounded-xl border ${it.color} flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div class="flex items-center gap-2.5">
+              <i class="fa-solid fa-file-${it.req ? 'circle-check text-blue-600' : 'arrow-up text-slate-400'} text-base"></i>
+              <div>
+                <div class="font-bold text-xs">${idx + 1}. ${it.name} ${it.req ? '<span class="text-rose-500">* [บังคับ]</span>' : '<span class="text-slate-400 text-[10px]">[ไม่บังคับ]</span>'}</div>
+                <div class="text-[10px] opacity-80">${it.desc}</div>
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-[10px] font-mono text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded font-bold">Mock Sample Attached</span>
+              <input type="file" class="text-[11px] max-w-[180px]" />
+            </div>
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
+      const policyBadge = document.getElementById('doc-policy-badge');
+      if (policyBadge) {
+        policyBadge.textContent = `Checklist for BU: ${bu} | Port: ${terminal}`;
+      }
+    }
+
+    // Step 5: AI Extraction Modal Trigger
+    function handleCreateRequestSubmit(event) {
+      event.preventDefault();
+      
+      const vslName = document.getElementById('req-vsl-name').value;
+      const imo = document.getElementById('req-imo').value;
+      const bu = document.getElementById('req-bu').value;
+      const term = document.getElementById('req-terminal').value;
+      const prod = document.getElementById('req-product').value;
+      const draft = parseFloat(document.getElementById('req-draft-midship').value) || 11.5;
+      const heightLimit = parseFloat(document.getElementById('req-manifold-height-limit').value) || 15.2;
+
+      // Update active case
+      AppData.activeCase.vesselName = vslName;
+      AppData.activeCase.imo = imo;
+      AppData.activeCase.bu = bu;
+      AppData.activeCase.terminal = term;
+      AppData.activeCase.product = prod;
+      AppData.activeCase.draftMidship = draft;
+      AppData.activeCase.terminalHeightLimit = heightLimit;
+
+      // Show AI Extraction Modal
+      const modal = document.getElementById('ai-modal');
+      const bar = document.getElementById('ai-progress-bar');
+      modal.classList.remove('hidden');
+      bar.style.width = '20%';
+
+      setTimeout(() => { bar.style.width = '65%'; }, 400);
+      setTimeout(() => { bar.style.width = '100%'; }, 800);
+      
+      setTimeout(() => {
+        modal.classList.add('hidden');
+        showToast('AI OCR ประมวลผลเอกสารและรัน Rule Engine เสร็จสมบูรณ์', 'success');
+        
+        // Sync active case to review screen
+        document.getElementById('rev-header-vsl-name').textContent = vslName;
+        document.getElementById('rev-badge-terminal').textContent = term;
+        document.getElementById('rev-rule-profile-label').textContent = bu === 'GC' ? 'GC Standard (+7d) & Criteria' : `${bu} Standard Policy`;
+        
+        recalculateAllRules();
+        navigate('review');
+      }, 1200);
+    }
+
+    // ================= CORE RULE ENGINE (BU Terminal Logic) =================
+    function recalculateAllRules() {
+      const bu = AppData.activeCase.bu;
+      const nomDate = new Date(AppData.activeCase.nominationDate);
+      const q88DateInput = new Date(document.getElementById('input-q88-date').value);
+      const piDateInput = new Date(document.getElementById('input-pi-date').value);
+      const dischargeDate = new Date(AppData.activeCase.dischargeLastDay);
+
+      // 1. Q88 Date: Nomination - Q88 <= 14 Days
+      const diffDaysQ88 = Math.floor((nomDate - q88DateInput) / (1000 * 60 * 60 * 24));
+      const q88Passed = diffDaysQ88 <= 14;
+      const q88Badge = document.getElementById('badge-q88-date');
+      const q88Msg = document.getElementById('msg-q88-date');
+      
+      if (q88Passed) {
+        q88Badge.className = 'badge-pass px-2 py-0.5 rounded-full text-[10px] font-bold';
+        q88Badge.innerHTML = '✅ PASS';
+        q88Msg.className = 'text-xs font-medium text-emerald-600';
+        q88Msg.innerHTML = `<i class="fa-solid fa-circle-check mr-1"></i> อายุเอกสาร ${diffDaysQ88} วัน (ตรงตามเกณฑ์ ≤ 14 วัน)`;
+      } else {
+        q88Badge.className = 'badge-fail px-2 py-0.5 rounded-full text-[10px] font-bold';
+        q88Badge.innerHTML = '❌ FAIL';
+        q88Msg.className = 'text-xs font-medium text-rose-600';
+        q88Msg.innerHTML = `<i class="fa-solid fa-circle-exclamation mr-1"></i> อายุเอกสาร ${diffDaysQ88} วัน (เกินเกณฑ์ 14 วัน) ต้องขอแบบสอบถาม Q88 ปรับปรุงใหม่`;
+      }
+
+      // 2. P&I Insurance Expiry (GC requires Discharge + 7 Days, others require Discharge)
+      let requiredPiDate = new Date(dischargeDate);
+      if (bu === 'GC') {
+        requiredPiDate.setDate(requiredPiDate.getDate() + 7);
+      }
+      
+      const piPassed = piDateInput >= requiredPiDate;
+      const piBadge = document.getElementById('badge-pi-expiry');
+      const piMsg = document.getElementById('msg-pi-expiry');
+      const piReqLabel = document.getElementById('label-pi-required');
+      
+      if (piReqLabel) {
+        piReqLabel.textContent = `≥ ${requiredPiDate.toLocaleDateString('en-GB')} (${bu === 'GC' ? 'Laycan+7d' : 'Laycan'})`;
+      }
+      
+      if (piPassed) {
+        piBadge.className = 'badge-pass px-2 py-0.5 rounded-full text-[10px] font-bold';
+        piBadge.innerHTML = '✅ PASS';
+        piMsg.className = 'text-xs font-medium text-emerald-600';
+        piMsg.innerHTML = `<i class="fa-solid fa-circle-check mr-1"></i> ความคุ้มครองครอบคลุมถึง ${piDateInput.toLocaleDateString('en-GB')} ผ่านเกณฑ์ของ ${bu}`;
+      } else {
+        piBadge.className = 'badge-fail px-2 py-0.5 rounded-full text-[10px] font-bold';
+        piBadge.innerHTML = '❌ FAIL';
+        piMsg.className = 'text-xs font-medium text-rose-600';
+        piMsg.innerHTML = `<i class="fa-solid fa-circle-exclamation mr-1"></i> กรมธรรม์หมดอายุ ${piDateInput.toLocaleDateString('en-GB')} ก่อนเกณฑ์บังคับ (${requiredPiDate.toLocaleDateString('en-GB')})`;
+      }
+
+      // 3. Moulded Depth vs Draft + Freeboard
+      const moulded = parseFloat(document.getElementById('input-moulded-depth').value) || 21.50;
+      const draft = parseFloat(document.getElementById('input-summer-draft').value) || 14.89;
+      const fb = parseFloat(document.getElementById('input-summer-fb').value) || 6.58;
+      const sumDepth = draft + fb;
+      const diffDepth = Math.abs(moulded - sumDepth);
+
+      const depthBadge = document.getElementById('badge-moulded-depth');
+      const depthMsg = document.getElementById('msg-moulded-depth');
+      const mathLabel = document.getElementById('label-depth-math');
+      if (mathLabel) {
+        mathLabel.textContent = `Draft (${draft.toFixed(2)}) + Freeboard (${fb.toFixed(2)}) = ${sumDepth.toFixed(2)} m vs ${moulded.toFixed(2)} m (Diff ${diffDepth.toFixed(2)} m)`;
+      }
+
+      if (diffDepth === 0) {
+        depthBadge.className = 'badge-pass px-2 py-0.5 rounded-full text-[10px] font-bold';
+        depthBadge.innerHTML = '✅ PASS';
+        depthMsg.className = 'text-xs font-medium text-emerald-600';
+        depthMsg.innerHTML = `<i class="fa-solid fa-circle-check mr-1"></i> ตัวเลข Draft + Freeboard เท่ากับ Moulded Depth พอดี`;
+      } else if (diffDepth <= 0.05) {
+        depthBadge.className = 'badge-warn px-2 py-0.5 rounded-full text-[10px] font-bold';
+        depthBadge.innerHTML = '⚠️ WARNING';
+        depthMsg.className = 'text-xs font-medium text-amber-700';
+        depthMsg.innerHTML = `<i class="fa-solid fa-triangle-exclamation mr-1"></i> ผลรวมต่างกัน ${diffDepth.toFixed(2)} m (อนุโลมเป็นความหนากระดูกงู Keel Thickness ไม่เกิน 0.05 m)`;
+      } else {
+        depthBadge.className = 'badge-fail px-2 py-0.5 rounded-full text-[10px] font-bold';
+        depthBadge.innerHTML = '❌ FAIL';
+        depthMsg.className = 'text-xs font-medium text-rose-600';
+        depthMsg.innerHTML = `<i class="fa-solid fa-circle-xmark mr-1"></i> ตัวเลขคลาดเคลื่อนเกินเกณฑ์กระดูกงู (ต่างกัน ${diffDepth.toFixed(2)} m)`;
+      }
+
+      // 4. Manifold Height Calculation: Moulded Depth - Draft midship (Orange) + DeckToManifold (1.90)
+      const midshipDraft = AppData.activeCase.draftMidship;
+      const heightLimit = AppData.activeCase.terminalHeightLimit;
+      const deckDist = 1.900;
+      const calcHeight = moulded - midshipDraft + deckDist;
+
+      const mathDraft = document.getElementById('label-math-draft');
+      const mathLimit = document.getElementById('label-math-limit');
+      const mathCalc = document.getElementById('label-calculated-height-val');
+      if (mathDraft) mathDraft.textContent = midshipDraft.toFixed(3);
+      if (mathLimit) mathLimit.textContent = heightLimit.toFixed(3);
+      if (mathCalc) mathCalc.textContent = calcHeight.toFixed(3);
+
+      const heightBadge = document.getElementById('badge-calc-height');
+      const heightMsg = document.getElementById('msg-calc-height');
+      if (calcHeight < heightLimit) {
+        heightBadge.className = 'badge-pass px-2 py-0.5 rounded-full text-[10px] font-bold';
+        heightBadge.innerHTML = '✅ PASS';
+        heightMsg.className = 'text-xs font-medium text-emerald-700';
+        heightMsg.innerHTML = `<i class="fa-solid fa-circle-check mr-1"></i> ความสูงท่อสินค้า (${calcHeight.toFixed(3)} m) ต่ำกว่าข้อจำกัดหน้าท่า (${heightLimit.toFixed(3)} m)`;
+      } else {
+        heightBadge.className = 'badge-fail px-2 py-0.5 rounded-full text-[10px] font-bold';
+        heightBadge.innerHTML = '❌ FAIL';
+        heightMsg.className = 'text-xs font-medium text-rose-600';
+        heightMsg.innerHTML = `<i class="fa-solid fa-circle-xmark mr-1"></i> Calculated manifold height too high. Please adjust arrival draft in stowage plan.`;
+      }
+
+      // Overall Badge Calculation
+      let fails = 0;
+      let warns = 0;
+      if (!q88Passed) fails++;
+      if (!piPassed) fails++;
+      if (calcHeight >= heightLimit) fails++;
+      if (diffDepth > 0.05) fails++;
+      else if (diffDepth > 0) warns++;
+      fails++; // Next Dry Dock 2024 is past due
+
+      const overallBadge = document.getElementById('review-overall-badge');
+      const radioReject = document.getElementById('radio-reject');
+      const radioAccept = document.getElementById('radio-accept');
+      const remarkInput = document.getElementById('decision-remarks');
+
+      if (fails > 0) {
+        overallBadge.className = 'badge-fail px-3 py-1 rounded-full text-xs font-bold inline-flex items-center gap-1.5 shadow-sm';
+        overallBadge.innerHTML = `<i class="fa-solid fa-circle-xmark"></i> ❌ FAILED (${fails} Issues Found)`;
+        radioReject.checked = true;
+        remarkInput.value = `ตรวจพบประเด็นสำคัญไม่ผ่านเกณฑ์ ${fails} ข้อ: เอกสาร Q88 เกิน 14 วัน และกรมธรรม์ P&I หมดอายุ`;
+      } else if (warns > 0) {
+        overallBadge.className = 'badge-warn px-3 py-1 rounded-full text-xs font-bold inline-flex items-center gap-1.5 shadow-sm';
+        overallBadge.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> ⚠️ WARNING (${warns} Notice)`;
+        radioAccept.checked = true;
+        remarkInput.value = 'ผ่านเกณฑ์ โดยมีเงื่อนไขตรวจสอบหน้าท่าเพิ่มเติมเรื่องความหนากระดูกงูเรือ';
+      } else {
+        overallBadge.className = 'badge-pass px-3 py-1 rounded-full text-xs font-bold inline-flex items-center gap-1.5 shadow-sm';
+        overallBadge.innerHTML = `<i class="fa-solid fa-circle-check"></i> ✅ ALL PASSED`;
+        radioAccept.checked = true;
+        remarkInput.value = 'ผ่านเกณฑ์ข้อกำหนดความปลอดภัยและการเชื่อมต่อท่อส่งสินค้าทุกรายการ';
+      }
+    }
+
+    // PDF Bounding Box Highlight Effect
+    function highlightPdfBbox(bboxId) {
+      document.querySelectorAll('.bounding-box').forEach(b => b.classList.remove('active'));
+      const target = document.getElementById(bboxId);
+      if (target) {
+        target.classList.add('active');
+        target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }
+
+    // Rule Filter Pills
+    function filterRuleCards(filterType) {
+      document.querySelectorAll('.rule-pill').forEach(btn => {
+        btn.classList.remove('bg-slate-900', 'text-white');
+      });
+      event.target.classList.add('bg-slate-900', 'text-white');
+
+      document.querySelectorAll('.rule-card').forEach(card => {
+        const status = card.getAttribute('data-status');
+        if (filterType === 'ALL' || status === filterType) {
+          card.style.display = 'block';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+    }
+
+    // Step 9: Submit Decision to DB (Zero file storage policy - Only PASS or FAIL)
+    function submitFinalEvaluation() {
+      const decision = document.querySelector('input[name="final_decision"]:checked').value;
+      const remarks = document.getElementById('decision-remarks').value;
+
+      if (!remarks.trim()) {
+        showToast('กรุณาระบุข้อคิดเห็นประกอบการตัดสินใจ', 'warn');
+        return;
+      }
+
+      const todayStr = new Date().toLocaleDateString('en-GB');
+
+      // Construct new request log (Only PASS or FAIL)
+      const newLog = {
+        id: 'REQ-' + new Date().toISOString().slice(0,10).replace(/-/g,'') + '-0' + (AppData.requests.length + 1),
+        requestDate: todayStr,
+        vesselName: AppData.activeCase.vesselName.toUpperCase(),
+        imo: AppData.activeCase.imo,
+        bu: AppData.activeCase.bu,
+        terminal: AppData.activeCase.terminal,
+        product: AppData.activeCase.product,
+        laycanRange: '10/09/2026 - 15/09/2026',
+        status: decision === 'ACCEPT' ? 'PASS' : 'FAIL',
+        issuesCount: decision === 'ACCEPT' ? 0 : 2,
+        submittedAt: todayStr + ' ' + new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }),
+        decision: decision
+      };
+
+      AppData.requests.unshift(newLog);
+      renderHistoryTable();
+
+      showToast(`บันทึกผลการตรวจ ${newLog.id} (สถานะ: ${newLog.status}) ลงฐานข้อมูลเรียบร้อย`, 'success');
+      navigate('dashboard');
+    }
+
+    // Render History Table (Step 10 - Separated BU & Terminal, New Request Date, Only PASS/FAIL)
+    function renderHistoryTable(data = AppData.requests) {
+      const tbody = document.getElementById('history-table-body');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+
+      data.forEach(req => {
+        const isPass = req.status === 'PASS';
+        const badgeClass = isPass ? 'badge-pass' : 'badge-fail';
+        const iconClass = isPass ? 'fa-circle-check text-emerald-600' : 'fa-circle-xmark text-rose-600';
+
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-50 transition';
+        tr.innerHTML = `
+          <td class="px-4 py-3 font-mono font-bold text-blue-600">${req.id}</td>
+          <td class="px-4 py-3 font-mono text-slate-600">${req.requestDate || '01/09/2026'}</td>
+          <td class="px-4 py-3 font-bold text-slate-900">${req.vesselName} <span class="font-normal text-slate-400 font-mono">(${req.imo})</span></td>
+          <td class="px-4 py-3"><span class="px-2.5 py-1 rounded-md bg-blue-50 text-blue-700 border border-blue-200 font-bold font-mono text-xs">${req.bu}</span></td>
+          <td class="px-4 py-3 font-medium text-slate-800">${req.terminal}</td>
+          <td class="px-4 py-3 text-slate-600">${req.product}</td>
+          <td class="px-4 py-3 font-mono text-slate-600">${req.laycanRange}</td>
+          <td class="px-4 py-3">
+            <span class="${badgeClass} px-2.5 py-1 rounded-full text-[11px] font-bold inline-flex items-center gap-1.5 shadow-sm">
+              <i class="fa-solid ${iconClass}"></i> ${req.status}
+            </span>
+          </td>
+          <td class="px-4 py-3 text-right">
+            <button onclick="openReviewInNewTab('${req.id}')" class="px-3 py-1.5 rounded-lg border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-600 hover:text-white font-semibold transition text-xs inline-flex items-center gap-1.5 shadow-sm">
+              <i class="fa-solid fa-arrow-up-right-from-square text-[11px]"></i>
+              <span>Review AI Result</span>
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      const countLabel = document.getElementById('table-count-label');
+      if (countLabel) countLabel.textContent = `แสดง ${data.length} รายการ`;
+    }
+
+    // Open AI Review in New Tab / Window
+    function openReviewInNewTab(reqId) {
+      const req = AppData.requests.find(r => r.id === reqId);
+      if (req) {
+        AppData.activeCase.vesselName = req.vesselName;
+        AppData.activeCase.imo = req.imo;
+        AppData.activeCase.bu = req.bu;
+        AppData.activeCase.terminal = req.terminal;
+        AppData.activeCase.product = req.product;
+        
+        const badgeReqId = document.getElementById('rev-badge-req-id');
+        const headerVsl = document.getElementById('rev-header-vsl-name');
+        const badgeTerm = document.getElementById('rev-badge-terminal');
+        if (badgeReqId) badgeReqId.textContent = req.id;
+        if (headerVsl) headerVsl.textContent = req.vesselName;
+        if (badgeTerm) badgeTerm.textContent = req.terminal;
+      }
+
+      // Generate target URL for new tab
+      const targetUrl = window.location.pathname + '?view=review&id=' + encodeURIComponent(reqId);
+      const newWindow = window.open(targetUrl, '_blank');
+      
+      if (!newWindow) {
+        // If popup blocker intervened, fallback to same-window navigation
+        recalculateAllRules();
+        navigate('review');
+        showToast('เปิดหน้ารายงานผลการประเมินในแท็บปัจจุบัน (Popup ถูกบล็อก)', 'info');
+      } else {
+        showToast(`เปิดผลการตรวจ ${reqId} ในแท็บใหม่เรียบร้อย`, 'success');
+      }
+    }
+
+    // Multi-field Individual History Filter (Terminal Name & Terminal Group)
+    function applyHistoryFilter() {
+      const vesselQuery = (document.getElementById('history-filter-vessel')?.value || '').toLowerCase().trim();
+      const imoQuery = (document.getElementById('history-filter-imo')?.value || '').toLowerCase().trim();
+      const buQuery = document.getElementById('history-filter-bu')?.value || 'ALL';
+      const termQuery = document.getElementById('history-filter-terminal')?.value || 'ALL';
+      const statusQuery = document.getElementById('history-filter-status')?.value || 'ALL';
+
+      const filtered = AppData.requests.filter(r => {
+        const matchVessel = !vesselQuery || r.vesselName.toLowerCase().includes(vesselQuery);
+        const matchImo = !imoQuery || r.imo.includes(imoQuery);
+        
+        // Match Terminal Group (r.terminal matching group terminals or prefix)
+        let matchBu = true;
+        if (buQuery !== 'ALL') {
+          const termObj = AppData.terminals.find(t => t.displayName.toLowerCase() === r.terminal.toLowerCase() || t.mapName.toLowerCase() === r.terminal.toLowerCase());
+          matchBu = termObj ? termObj.bu === buQuery : r.terminal.startsWith(buQuery);
+        }
+        
+        // Match specific Terminal Name
+        const matchTerm = termQuery === 'ALL' || r.terminal.toLowerCase().includes(termQuery.toLowerCase()) || termQuery.toLowerCase().includes(r.terminal.toLowerCase());
+        const matchStatus = statusQuery === 'ALL' || r.status === statusQuery;
+
+        return matchVessel && matchImo && matchBu && matchTerm && matchStatus;
+      });
+
+      renderHistoryTable(filtered);
+    }
+
+    function resetHistoryFilters() {
+      if (document.getElementById('history-filter-vessel')) document.getElementById('history-filter-vessel').value = '';
+      if (document.getElementById('history-filter-imo')) document.getElementById('history-filter-imo').value = '';
+      if (document.getElementById('history-filter-bu')) document.getElementById('history-filter-bu').value = 'ALL';
+      if (document.getElementById('history-filter-terminal')) document.getElementById('history-filter-terminal').value = 'ALL';
+      if (document.getElementById('history-filter-status')) document.getElementById('history-filter-status').value = 'ALL';
+      renderHistoryTable(AppData.requests);
+      showToast('ล้างตัวกรองทั้งหมดเรียบร้อย', 'info');
+    }
+
+    // Render Admin Screen 1: User Management Table (Clean Name, Email, BU Teams, Roles, Double-click Edit)
+    function renderAdminUserTable(usersList = AppData.users) {
+      const tbody = document.getElementById('admin-user-tbody');
+      const countBadge = document.getElementById('user-count-badge');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+
+      if (usersList.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="5" class="px-4 py-8 text-center text-slate-400 italic">ไม่พบข้อมูลผู้ใช้งานที่ตรงกับเงื่อนไขการค้นหา</td>
+          </tr>
+        `;
+      } else {
+        usersList.forEach(u => {
+          const roleColor = u.role === 'Super Admin' 
+            ? 'bg-purple-100 text-purple-800 border-purple-200' 
+            : u.role === 'Admin' 
+            ? 'bg-blue-100 text-blue-800 border-blue-200' 
+            : 'bg-slate-100 text-slate-700 border-slate-200';
+
+          const buColor = u.bu === 'Crude'
+            ? 'bg-amber-50 text-amber-800 border-amber-200'
+            : u.bu === 'PetChem'
+            ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+            : u.bu === 'Product'
+            ? 'bg-cyan-50 text-cyan-800 border-cyan-200'
+            : 'bg-indigo-50 text-indigo-800 border-indigo-200';
+
+          const tr = document.createElement('tr');
+          tr.className = 'hover:bg-blue-50/50 cursor-pointer transition select-none group';
+          tr.title = 'ดับเบิ้ลคลิกเพื่อแก้ไขข้อมูลส่วนบุคคลของผู้ใช้';
+          tr.ondblclick = () => openEditUserModal(u.id);
+
+          tr.innerHTML = `
+            <td class="px-4 py-3">
+              <div class="font-bold text-slate-900 group-hover:text-blue-600 transition flex items-center gap-1.5">
+                <i class="fa-regular fa-circle-user text-slate-400 group-hover:text-blue-500"></i>
+                <span>${u.name}</span>
+              </div>
+            </td>
+            <td class="px-4 py-3 font-mono text-slate-600">${u.email || u.upn}</td>
+            <td class="px-4 py-3">
+              <span class="px-2.5 py-1 rounded-md border font-bold text-xs font-mono ${buColor}">${u.bu}</span>
+            </td>
+            <td class="px-4 py-3">
+              <span class="px-2.5 py-1 rounded-md border text-xs font-bold ${roleColor}">
+                ${u.role}
+              </span>
+            </td>
+            <td class="px-4 py-3">
+              <span class="${u.status === 'Active' ? 'badge-pass' : 'badge-warn'} px-2.5 py-0.5 rounded-full text-[11px] font-bold">
+                ${u.status}
+              </span>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+      }
+
+      if (countBadge) {
+        countBadge.textContent = `แสดง ${usersList.length} รายการ`;
+      }
+    }
+
+    // User Directory Search & Filter Handler
+    function filterUserTable() {
+      const keyword = (document.getElementById('user-filter-keyword')?.value || '').toLowerCase().trim();
+      const bu = document.getElementById('user-filter-bu')?.value || 'ALL';
+      const role = document.getElementById('user-filter-role')?.value || 'ALL';
+      const status = document.getElementById('user-filter-status')?.value || 'ALL';
+
+      const filtered = AppData.users.filter(u => {
+        const nameMatch = !keyword || (u.name || '').toLowerCase().includes(keyword) || (u.email || u.upn || '').toLowerCase().includes(keyword);
+        const buMatch = bu === 'ALL' || u.bu === bu;
+        const roleMatch = role === 'ALL' || u.role === role;
+        const statusMatch = status === 'ALL' || u.status === status;
+
+        return nameMatch && buMatch && roleMatch && statusMatch;
+      });
+
+      renderAdminUserTable(filtered);
+    }
+
+    function resetUserFilters() {
+      if (document.getElementById('user-filter-keyword')) document.getElementById('user-filter-keyword').value = '';
+      if (document.getElementById('user-filter-bu')) document.getElementById('user-filter-bu').value = 'ALL';
+      if (document.getElementById('user-filter-role')) document.getElementById('user-filter-role').value = 'ALL';
+      if (document.getElementById('user-filter-status')) document.getElementById('user-filter-status').value = 'ALL';
+      renderAdminUserTable(AppData.users);
+      showToast('ล้างตัวกรองรายชื่อผู้ใช้งานเรียบร้อย', 'info');
+    }
+
+    // User Modal Controls (Create & Edit User)
+    function openCreateUserModal() {
+      document.getElementById('user-form-id').value = '';
+      document.getElementById('user-form-name').value = '';
+      document.getElementById('user-form-email').value = '';
+      document.getElementById('user-form-bu').value = 'Crude';
+      document.getElementById('user-form-role').value = 'Requester';
+      document.getElementById('user-form-status').value = 'Active';
+
+      document.getElementById('user-modal-title').innerHTML = `
+        <i class="fa-solid fa-user-plus text-blue-600"></i> เพิ่มผู้ใช้งานใหม่ (Create New User)
+      `;
+      document.getElementById('modal-user-form').classList.remove('hidden');
+    }
+
+    function openEditUserModal(userId) {
+      const u = AppData.users.find(x => String(x.id) === String(userId));
+      if (!u) return;
+
+      document.getElementById('user-form-id').value = u.id;
+      document.getElementById('user-form-name').value = u.name;
+      document.getElementById('user-form-email').value = u.email || u.upn;
+      document.getElementById('user-form-bu').value = u.bu || 'Crude';
+      document.getElementById('user-form-role').value = u.role || 'Requester';
+      document.getElementById('user-form-status').value = u.status || 'Active';
+
+      document.getElementById('user-modal-title').innerHTML = `
+        <i class="fa-solid fa-user-pen text-blue-600"></i> แก้ไขข้อมูลผู้ใช้งาน: <span class="text-blue-700">${u.name}</span>
+      `;
+      document.getElementById('modal-user-form').classList.remove('hidden');
+    }
+
+    function closeUserModal() {
+      document.getElementById('modal-user-form').classList.add('hidden');
+    }
+
+    function handleSaveUser(event) {
+      event.preventDefault();
+      const id = document.getElementById('user-form-id').value;
+      const name = document.getElementById('user-form-name').value.trim();
+      const email = document.getElementById('user-form-email').value.trim();
+      const bu = document.getElementById('user-form-bu').value;
+      const role = document.getElementById('user-form-role').value;
+      const status = document.getElementById('user-form-status').value;
+
+      if (!name || !email) {
+        showToast('กรุณากรอกชื่อและอีเมลให้ครบถ้วน', 'warn');
+        return;
+      }
+
+      if (id) {
+        // Edit existing user
+        const u = AppData.users.find(x => String(x.id) === String(id));
+        if (u) {
+          u.name = name;
+          u.email = email;
+          u.upn = email;
+          u.bu = bu;
+          u.role = role;
+          u.status = status;
+          showToast(`อัปเดตข้อมูลผู้ใช้งาน ${name} เรียบร้อย`, 'success');
+        }
+      } else {
+        // Create new user
+        const newUser = {
+          id: 'usr-' + String(AppData.users.length + 1).padStart(2, '0'),
+          name: name,
+          email: email,
+          upn: email,
+          bu: bu,
+          role: role,
+          status: status
+        };
+        AppData.users.push(newUser);
+        showToast(`สร้างผู้ใช้งานใหม่ ${name} สำเร็จ`, 'success');
+      }
+
+      filterUserTable();
+      closeUserModal();
+    }
+
+    // Render Admin Screen 2: Port & Criteria Table (Removed Identifier, Logic Profile, Doc Rules)
+    function renderAdminPortTable(terminals = AppData.terminals) {
+      const tbody = document.getElementById('admin-port-tbody');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+
+      terminals.forEach(t => {
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-50 transition';
+        tr.innerHTML = `
+          <td class="px-4 py-3 font-mono font-bold text-slate-400">${String(t.id).padStart(2, '0')}</td>
+          <td class="px-4 py-3"><span class="px-2.5 py-1 rounded-md bg-blue-50 text-blue-700 font-bold font-mono text-xs border border-blue-200">${t.bu}</span></td>
+          <td class="px-4 py-3 font-bold text-slate-900 text-xs">${t.displayName}</td>
+          <td class="px-4 py-3 text-right">
+            <button onclick="editPortCriteria(${t.id})" class="px-3 py-1.5 bg-white border border-blue-300 text-blue-700 hover:bg-blue-600 hover:text-white font-bold rounded-xl transition text-xs inline-flex items-center gap-1.5 shadow-sm">
+              <i class="fa-solid fa-sliders text-[11px]"></i>
+              <span>Edit Criteria</span>
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      const countBadge = document.getElementById('terminal-count-badge');
+      if (countBadge) countBadge.textContent = `แสดง ${terminals.length} ท่าเรือในระบบ`;
+    }
+
+    function filterTerminalTableByBu(bu) {
+      if (bu === 'ALL') {
+        renderAdminPortTable(AppData.terminals);
+      } else {
+        const filtered = AppData.terminals.filter(t => t.bu === bu);
+        renderAdminPortTable(filtered);
+      }
+    }
+
+    // Permission Controller: Admin Only Guard for Criteria Editing
+    function checkAdminPermission() {
+      const isAdmin = AppData.currentUser && (AppData.currentUser.role === 'Admin' || AppData.currentUser.role === 'Super Admin');
+      const banner = document.getElementById('modal-admin-permission-banner');
+      const saveBtn = document.getElementById('btn-save-port-criteria');
+      const inputs = document.querySelectorAll('.port-cfg-input');
+
+      if (banner) {
+        if (isAdmin) {
+          banner.className = 'p-2.5 rounded-xl border bg-emerald-50 border-emerald-200 text-emerald-900 flex items-center justify-between text-xs transition';
+          banner.innerHTML = `
+            <div class="flex items-center gap-2 font-medium">
+              <i class="fa-solid fa-shield-halved text-emerald-600 text-sm"></i>
+              <span><b>สิทธิ์ผู้ดูแลระบบ (${AppData.currentUser.role}):</b> คุณมีสิทธิ์เปิด/ปิดเกณฑ์ Logic และปรับแต่งระยะเวลาการคำนวณ</span>
+            </div>
+            <span class="px-2 py-0.5 rounded bg-emerald-600 text-white font-bold text-[10px]">Admin Authorized</span>
+          `;
+        } else {
+          banner.className = 'p-2.5 rounded-xl border bg-amber-50 border-amber-200 text-amber-900 flex items-center justify-between text-xs transition';
+          banner.innerHTML = `
+            <div class="flex items-center gap-2 font-medium">
+              <i class="fa-solid fa-lock text-amber-600 text-sm"></i>
+              <span><b>โหมดดูอย่างเดียว (Read-Only):</b> สิทธิ์เฉพาะผู้ดูแลระบบ (Admin / Super Admin) เท่านั้นที่สามารถแก้ไขเกณฑ์และบันทึกข้อมูลได้</span>
+            </div>
+            <span class="px-2 py-0.5 rounded bg-amber-200 text-amber-900 font-bold text-[10px]">Read-Only Mode</span>
+          `;
+        }
+      }
+
+      inputs.forEach(input => {
+        input.disabled = !isAdmin;
+        if (!isAdmin) {
+          input.classList.add('opacity-70', 'cursor-not-allowed', 'bg-slate-100');
+        } else {
+          input.classList.remove('opacity-70', 'cursor-not-allowed', 'bg-slate-100');
+        }
+      });
+
+      if (saveBtn) {
+        saveBtn.disabled = !isAdmin;
+        if (!isAdmin) {
+          saveBtn.className = 'bg-slate-300 text-slate-500 font-bold px-5 py-2 rounded-xl shadow-none cursor-not-allowed flex items-center gap-2 transition';
+          saveBtn.title = 'เฉพาะผู้ดูแลระบบ (Admin) เท่านั้นที่มีสิทธิ์บันทึก';
+        } else {
+          saveBtn.className = 'bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-bold px-5 py-2 rounded-xl shadow-md transition flex items-center gap-2 cursor-pointer';
+          saveBtn.title = '';
+        }
+      }
+    }
+
+    // Modal Controls for Create / Edit Port
+    function openCreatePortModal(portId = null) {
+      if (portId) {
+        editPortCriteria(portId);
+        return;
+      }
+      const setVal = (id, val) => {
+        const el = document.getElementById(id);
+        if (el) el.value = val !== undefined ? val : '';
+      };
+      setVal('edit-port-id', '');
+      setVal('new-port-bu', 'GC');
+      setVal('new-port-display-name', '');
+      setVal('cfg-change-reason', '');
+
+      const titleEl = document.getElementById('modal-port-title');
+      if (titleEl) {
+        titleEl.innerHTML = `
+          <i class="fa-solid fa-anchor text-blue-600"></i> เพิ่มท่าเรือใหม่ &amp; กำหนดเกณฑ์ Logic
+        `;
+      }
+      checkAdminPermission();
+      renderPortAuditLogs('ALL');
+      const modal = document.getElementById('modal-create-port');
+      if (modal) modal.classList.remove('hidden');
+    }
+
+    function closeCreatePortModal() {
+      const modal = document.getElementById('modal-create-port');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    // Edit Criteria Modal Handler (Admin Screen 2 - Safe Property Mapping)
+    function editPortCriteria(portId) {
+      const port = AppData.terminals.find(p => String(p.id) === String(portId));
+      if (!port) {
+        console.warn('Port not found with ID:', portId);
+        return;
+      }
+
+      const setVal = (id, val) => {
+        const el = document.getElementById(id);
+        if (el) el.value = val !== undefined ? val : '';
+      };
+      const setChk = (id, chk) => {
+        const el = document.getElementById(id);
+        if (el) el.checked = !!chk;
+      };
+
+      setVal('edit-port-id', port.id);
+      setVal('new-port-bu', port.bu);
+      setVal('new-port-display-name', port.displayName);
+      
+      // 1) Q88 Issue Date Validity
+      setChk('chk-logic-q88', port.isQ88 !== undefined ? port.isQ88 : true);
+      setVal('cfg-q88-days', port.q88Days || 14);
+
+      // 2) P&I Insurance Expiry
+      setChk('chk-logic-pi', port.isPi !== undefined ? port.isPi : true);
+      setVal('cfg-pi-days', port.piDays !== undefined ? port.piDays : 7);
+
+      // 3) H&M Insurance Expiry
+      setChk('chk-logic-hm', port.isHm !== undefined ? port.isHm : true);
+      setVal('cfg-hm-days', port.hmDays !== undefined ? port.hmDays : 7);
+
+      // 4) Next Dry Dock Due
+      setChk('chk-logic-next-drydock', port.isNextDrydock !== undefined ? port.isNextDrydock : true);
+      setVal('cfg-next-drydock-months', port.nextDrydockMonths || 1);
+
+      // 5) Next Annual Survey Due
+      setChk('chk-logic-annual-survey', port.isAnnualSurvey !== undefined ? port.isAnnualSurvey : true);
+      setVal('cfg-annual-survey-days', port.annualSurveyDays !== undefined ? port.annualSurveyDays : 7);
+
+      // 6) Date of Last Dry Dock vs SIRE
+      setChk('chk-logic-drydock-sire', port.isDrydockSire !== undefined ? port.isDrydockSire : true);
+      setVal('cfg-drydock-offset-days', port.drydockOffsetDays !== undefined ? port.drydockOffsetDays : 0);
+      setVal('cfg-sire-offset-days', port.sireOffsetDays !== undefined ? port.sireOffsetDays : 0);
+
+      // 7) Date of Last Dry Dock (Min 3 Voyages)
+      setChk('chk-logic-drydock-min3voy', port.isDrydock3Voy !== undefined ? port.isDrydock3Voy : true);
+      setVal('cfg-drydock-min3voy-days', port.drydock3VoyDays || 21);
+
+      // 8) Next Dry Dock Due (Min 1 Voyage)
+      setChk('chk-logic-nextdrydock-min1voy', port.isNextDrydock1Voy !== undefined ? port.isNextDrydock1Voy : true);
+      setVal('cfg-nextdrydock-1voy-days', port.nextDrydock1VoyDays || 15);
+
+      // 9) Date of Last SIRE Inspection
+      setChk('chk-logic-sire-window', port.isSireWindow !== undefined ? port.isSireWindow : true);
+      setVal('cfg-sire-valid-months', port.sireWindowMonths || 6);
+
+      // 10) Date(s) of Name Change
+      setChk('chk-logic-namechange', port.isNamechange !== undefined ? port.isNamechange : true);
+      setVal('cfg-namechange-days', port.namechangeDays || 90);
+
+      // 11) Certificate Expiry Date
+      setChk('chk-logic-cert-expiry', port.isCertExpiry !== undefined ? port.isCertExpiry : true);
+      setVal('cfg-cert-days', port.certDays !== undefined ? port.certDays : 0);
+
+      setVal('cfg-change-reason', '');
+
+      const titleEl = document.getElementById('modal-port-title');
+      if (titleEl) {
+        titleEl.innerHTML = `
+          <i class="fa-solid fa-anchor text-blue-600"></i> ปรับแต่งเกณฑ์คำนวณและระยะเวลา: <span class="text-blue-700">${port.displayName} (${port.bu})</span>
+        `;
+      }
+
+      checkAdminPermission();
+      renderPortAuditLogs(port.id);
+      
+      const modal = document.getElementById('modal-create-port');
+      if (modal) {
+        modal.classList.remove('hidden');
+      }
+    }
+
+    // Render Audit Logs in Modal for a specific Port (Display Clean Logic Names in Column)
+    function renderPortAuditLogs(portId) {
+      const tbody = document.getElementById('modal-audit-tbody');
+      const countLabel = document.getElementById('modal-audit-count');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+
+      const logs = AppData.auditLogs.filter(l => String(l.portId) === String(portId) || portId === 'ALL');
+
+      if (logs.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="5" class="px-4 py-3 text-center text-slate-400 italic">ยังไม่มีประวัติการแก้ไขเกณฑ์ Logic สำหรับท่าเรือนี้</td>
+          </tr>
+        `;
+      } else {
+        logs.forEach(log => {
+          const tr = document.createElement('tr');
+          tr.className = 'hover:bg-slate-50 transition';
+          tr.innerHTML = `
+            <td class="px-3 py-2 font-mono text-slate-600 text-[11px] whitespace-nowrap">${log.timestamp}</td>
+            <td class="px-3 py-2 font-bold text-slate-800 text-[11px]">${log.rule}</td>
+            <td class="px-3 py-2 text-blue-700 font-medium text-[11px]">${log.changeDetail}</td>
+            <td class="px-3 py-2 text-slate-700 font-semibold text-[11px] whitespace-nowrap">${log.modifiedBy}</td>
+            <td class="px-3 py-2 text-slate-500 text-[11px]">${log.reason}</td>
+          </tr>
+          `;
+          tbody.appendChild(tr);
+        });
+      }
+
+      if (countLabel) {
+        countLabel.textContent = `${logs.length} บันทึกประวัติ`;
+      }
+    }
+
+    // Modal Controls for Create Port
+    function openCreatePortModal() {
+      document.getElementById('modal-create-port').classList.remove('hidden');
+    }
+    function closeCreatePortModal() {
+      document.getElementById('modal-create-port').classList.add('hidden');
+    }
+
+    // Save Port Criteria & Logic Engine Configuration (Admin / Super Admin Action)
+    function handleSaveNewPort(event) {
+      event.preventDefault();
+      
+      // Enforce Admin / Super Admin Permission check
+      if (!AppData.currentUser || (AppData.currentUser.role !== 'Admin' && AppData.currentUser.role !== 'Super Admin')) {
+        showToast('สิทธิ์ไม่เพียงพอ: เฉพาะผู้ดูแลระบบ (Admin / Super Admin) เท่านั้นที่สามารถแก้ไขและบันทึกเกณฑ์ Logic ได้', 'error');
+        return;
+      }
+
+      const portId = document.getElementById('edit-port-id').value;
+      const bu = document.getElementById('new-port-bu').value;
+      const dispName = document.getElementById('new-port-display-name').value;
+      
+      // Extract 11 Rule Parameters
+      const isQ88 = document.getElementById('chk-logic-q88').checked;
+      const q88Days = parseInt(document.getElementById('cfg-q88-days').value) || 14;
+
+      const isPi = document.getElementById('chk-logic-pi').checked;
+      const piDays = parseInt(document.getElementById('cfg-pi-days').value) || 7;
+
+      const isHm = document.getElementById('chk-logic-hm').checked;
+      const hmDays = parseInt(document.getElementById('cfg-hm-days').value) || 7;
+
+      const isNextDrydock = document.getElementById('chk-logic-next-drydock').checked;
+      const nextDrydockMonths = parseInt(document.getElementById('cfg-next-drydock-months').value) || 1;
+
+      const isAnnualSurvey = document.getElementById('chk-logic-annual-survey').checked;
+      const annualSurveyDays = parseInt(document.getElementById('cfg-annual-survey-days').value) || 7;
+
+      const isDrydockSire = document.getElementById('chk-logic-drydock-sire').checked;
+      const drydockOffsetDays = parseInt(document.getElementById('cfg-drydock-offset-days').value) || 0;
+      const sireOffsetDays = parseInt(document.getElementById('cfg-sire-offset-days').value) || 0;
+
+      const isDrydock3Voy = document.getElementById('chk-logic-drydock-min3voy').checked;
+      const drydock3VoyDays = parseInt(document.getElementById('cfg-drydock-min3voy-days').value) || 21;
+
+      const isNextDrydock1Voy = document.getElementById('chk-logic-nextdrydock-min1voy').checked;
+      const nextDrydock1VoyDays = parseInt(document.getElementById('cfg-nextdrydock-1voy-days').value) || 15;
+
+      const isSireWindow = document.getElementById('chk-logic-sire-window').checked;
+      const sireWindowMonths = parseInt(document.getElementById('cfg-sire-valid-months').value) || 6;
+
+      const isNamechange = document.getElementById('chk-logic-namechange').checked;
+      const namechangeDays = parseInt(document.getElementById('cfg-namechange-days').value) || 90;
+
+      const isCertExpiry = document.getElementById('chk-logic-cert-expiry').checked;
+      const certDays = parseInt(document.getElementById('cfg-cert-days').value) || 0;
+
+      const reason = document.getElementById('cfg-change-reason').value.trim() || 'ปรับปรุงเกณฑ์การคำนวณและระยะเวลาตามนโยบายความปลอดภัยท่าเรือ';
+
+      const nowStr = new Date().toLocaleDateString('en-GB') + ' ' + new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+      const modifier = `${AppData.currentUser.name} (${AppData.currentUser.bu} ${AppData.currentUser.role})`;
+
+      if (portId) {
+        // Update existing port
+        const p = AppData.terminals.find(x => x.id === parseInt(portId));
+        if (p) {
+          const oldQ88 = p.q88Days;
+          const oldPi = p.piDays;
+          const oldHm = p.hmDays;
+          const oldNextDrydock = p.nextDrydockMonths;
+
+          p.bu = bu;
+          p.displayName = dispName;
+          p.isQ88 = isQ88;
+          p.q88Days = q88Days;
+          p.isPi = isPi;
+          p.piDays = piDays;
+          p.isHm = isHm;
+          p.hmDays = hmDays;
+          p.isNextDrydock = isNextDrydock;
+          p.nextDrydockMonths = nextDrydockMonths;
+          p.isAnnualSurvey = isAnnualSurvey;
+          p.annualSurveyDays = annualSurveyDays;
+          p.isDrydockSire = isDrydockSire;
+          p.drydockOffsetDays = drydockOffsetDays;
+          p.sireOffsetDays = sireOffsetDays;
+          p.isDrydock3Voy = isDrydock3Voy;
+          p.drydock3VoyDays = drydock3VoyDays;
+          p.isNextDrydock1Voy = isNextDrydock1Voy;
+          p.nextDrydock1VoyDays = nextDrydock1VoyDays;
+          p.isSireWindow = isSireWindow;
+          p.sireWindowMonths = sireWindowMonths;
+          p.isNamechange = isNamechange;
+          p.namechangeDays = namechangeDays;
+          p.isCertExpiry = isCertExpiry;
+          p.certDays = certDays;
+
+          // Identify specific rule changes for clean audit log
+          let ruleName = 'P&I Insurance Expiry';
+          const changes = [];
+          if (oldPi !== piDays) {
+            ruleName = 'P&I Insurance Expiry';
+            changes.push(`P&I Expiry Buffer: +${oldPi}d ➔ +${piDays}d`);
+          }
+          if (oldQ88 !== q88Days) {
+            ruleName = 'Q88 Issue Date Validity';
+            changes.push(`Q88 Validity: ≤ ${oldQ88}d ➔ ≤ ${q88Days}d`);
+          }
+          if (oldHm !== hmDays) {
+            ruleName = 'H&M Insurance Expiry';
+            changes.push(`H&M Expiry Buffer: +${oldHm}d ➔ +${hmDays}d`);
+          }
+          if (oldNextDrydock !== nextDrydockMonths) {
+            ruleName = 'Next Dry Dock Due';
+            changes.push(`Next Dry Dock: +${oldNextDrydock}m ➔ +${nextDrydockMonths}m`);
+          }
+          if (changes.length === 0) {
+            ruleName = 'Port Criteria Config';
+            changes.push(`อัปเดตเกณฑ์ Logic: Q88(${q88Days}d), P&I(+${piDays}d), SIRE(${sireWindowMonths}m)`);
+          }
+
+          const newAudit = {
+            id: 'AUD-' + String(AppData.auditLogs.length + 1).padStart(3, '0'),
+            portId: p.id,
+            portName: p.displayName,
+            timestamp: nowStr,
+            rule: ruleName,
+            changeDetail: changes.join(', '),
+            modifiedBy: modifier,
+            reason: reason
+          };
+
+          AppData.auditLogs.unshift(newAudit);
+          showToast(`บันทึกเกณฑ์ Logic ท่าเรือ ${dispName} และบันทึก Audit Log เรียบร้อย`, 'success');
+        }
+      } else {
+        // Create new port
+        const newPort = {
+          id: AppData.terminals.length + 1,
+          bu: bu,
+          mapName: dispName,
+          displayName: dispName,
+          isQ88: isQ88,
+          q88Days: q88Days,
+          isPi: isPi,
+          piDays: piDays,
+          isHm: isHm,
+          hmDays: hmDays,
+          isNextDrydock: isNextDrydock,
+          nextDrydockMonths: nextDrydockMonths,
+          isAnnualSurvey: isAnnualSurvey,
+          annualSurveyDays: annualSurveyDays,
+          isDrydockSire: isDrydockSire,
+          drydockOffsetDays: drydockOffsetDays,
+          sireOffsetDays: sireOffsetDays,
+          isDrydock3Voy: isDrydock3Voy,
+          drydock3VoyDays: drydock3VoyDays,
+          isNextDrydock1Voy: isNextDrydock1Voy,
+          nextDrydock1VoyDays: nextDrydock1VoyDays,
+          isSireWindow: isSireWindow,
+          sireWindowMonths: sireWindowMonths,
+          isNamechange: isNamechange,
+          namechangeDays: namechangeDays,
+          isCertExpiry: isCertExpiry,
+          certDays: certDays
+        };
+
+        AppData.terminals.push(newPort);
+
+        // Record Audit Log
+        AppData.auditLogs.unshift({
+          id: 'AUD-' + String(AppData.auditLogs.length + 1).padStart(3, '0'),
+          portId: newPort.id,
+          portName: newPort.displayName,
+          timestamp: nowStr,
+          rule: 'Port Criteria Config',
+          changeDetail: `กำหนดเกณฑ์เริ่มต้น: Q88 (${q88Days}d) | P&I (+${piDays}d) | SIRE (${sireWindowMonths}m)`,
+          modifiedBy: modifier,
+          reason: reason
+        });
+
+        showToast(`สร้างท่าเรือ ${dispName} และบันทึกเกณฑ์คำนวณเรียบร้อย`, 'success');
+      }
+
+      renderAdminPortTable();
+      populateTerminalDropdown(AppData.currentUser.bu);
+      closeCreatePortModal();
+    }
+
+    // Azure AD Persona Switcher
+    function openSsoModal() {
+      const list = document.getElementById('sso-user-list');
+      if (!list) return;
+      list.innerHTML = '';
+
+      AppData.users.forEach(u => {
+        const btn = document.createElement('button');
+        btn.className = 'w-full text-left p-3 rounded-xl border border-slate-200 hover:border-blue-500 hover:bg-blue-50/50 flex items-center justify-between transition';
+        btn.onclick = () => switchCurrentUser(u);
+        btn.innerHTML = `
+          <div>
+            <div class="font-bold text-slate-900">${u.name}</div>
+            <div class="text-[10px] text-slate-500 font-mono">${u.email || u.upn}</div>
+          </div>
+          <div class="text-right">
+            <span class="px-2 py-0.5 rounded font-bold text-[10px] ${u.role === 'Admin' || u.role === 'Super Admin' ? 'bg-emerald-100 text-emerald-800' : 'bg-blue-100 text-blue-800'}">${u.bu} (${u.role})</span>
+            <div class="text-[10px] text-slate-400">${u.status}</div>
+          </div>
+        `;
+        list.appendChild(btn);
+      });
+
+      document.getElementById('modal-sso').classList.remove('hidden');
+    }
+
+    function closeSsoModal() {
+      document.getElementById('modal-sso').classList.add('hidden');
+    }
+
+    function switchCurrentUser(user) {
+      AppData.currentUser = {
+        id: user.id,
+        name: user.name,
+        email: user.email || user.upn,
+        upn: user.email || user.upn,
+        bu: user.bu,
+        role: user.role,
+        ruleProfile: `${user.bu} Standard Policy`
+      };
+
+      // Update sidebar UI
+      const headerBu = document.getElementById('current-header-bu');
+      if (headerBu) headerBu.textContent = `${user.name} (${user.bu} - ${user.role})`;
+      const ruleTag = document.getElementById('sidebar-active-bu-rule');
+      if (ruleTag) {
+        ruleTag.textContent = `${user.bu} Team Logic`;
+      }
+      
+      checkAdminPermission();
+      closeSsoModal();
+      showToast(`สลับผู้ใช้งานเป็น ${user.name} (ทีม: ${user.bu}, สิทธิ์: ${user.role})`, 'info');
+    }
+
+    // Initialize Application on Window Load (Handles Query Params for New Tab Review)
+    window.onload = function() {
+      renderHistoryTable();
+      renderAdminUserTable();
+      renderAdminPortTable();
+      populateTerminalDropdown('GC');
+      recalculateAllRules();
+
+      // Check URL parameters for Direct Review View (New Tab)
+      const urlParams = new URLSearchParams(window.location.search);
+      const viewParam = urlParams.get('view');
+      const idParam = urlParams.get('id');
+
+      if (viewParam === 'review') {
+        if (idParam) {
+          const req = AppData.requests.find(r => r.id === idParam);
+          if (req) {
+            AppData.activeCase.vesselName = req.vesselName;
+            AppData.activeCase.imo = req.imo;
+            AppData.activeCase.bu = req.bu;
+            AppData.activeCase.terminal = req.terminal;
+            AppData.activeCase.product = req.product;
+            
+            const badgeReqId = document.getElementById('rev-badge-req-id');
+            const headerVsl = document.getElementById('rev-header-vsl-name');
+            const badgeTerm = document.getElementById('rev-badge-terminal');
+            if (badgeReqId) badgeReqId.textContent = req.id;
+            if (headerVsl) headerVsl.textContent = req.vesselName;
+            if (badgeTerm) badgeTerm.textContent = req.terminal;
+          }
+        }
+        recalculateAllRules();
+        navigate('review');
+      }
+    };
+  </script>
+</body>
+</html>
